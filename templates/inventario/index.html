@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<!--
+  InventarioNube v11
+  Sistema de inventario, ventas y facturación con escáner de cámara, voz y WhatsApp
+  
+  Desarrollado con la asistencia de Claude (Anthropic) — https://claude.ai
+  Autora: ver perfil de GitHub del repositorio
+  
+  Para instalar en tu negocio: abre un Issue en GitHub
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>InventarioNube</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#1a5cff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="InventarioNube">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+/* ═══════════════════════════════════════════════════
+   DISEÑO PARA PERSONAS MAYORES
+   Letras grandes · Botones grandes · Alto contraste
+═══════════════════════════════════════════════════ */
+:root{
+  --bg:#f5f4ef;
+  --sf:#ffffff;
+  --bd:rgba(0,0,0,0.12);
+  --bds:rgba(0,0,0,0.25);
+  --tx:#0d0d0b;
+  --mt:#444441;
+  --ht:#888884;
+  --ac:#0047cc;
+  --acl:#dce8ff;
+  --gn:#076b36;
+  --gnl:#cbf0db;
+  --am:#8a4e00;
+  --aml:#fdefd0;
+  --rd:#b01c1c;
+  --rdl:#fde0e0;
+  --r:16px;
+  --rs:12px;
+  --fs:19px;
+  --fsh:22px;
+  --fsl:26px;
+  /* SIDEBAR COLOR — cambia con el tema */
+  --sidebar:#0d0d0b;
+  --sidebar-txt:rgba(255,255,255,0.7);
+  --sidebar-active:rgba(77,143,255,0.22);
+  --sidebar-border:rgba(255,255,255,0.15);
+}
+/* ── TEMAS DE COLOR ── */
+[data-tema="azul"] { --ac:#0047cc; --acl:#dce8ff; --sidebar:#0d1a3d; --sidebar-active:rgba(77,143,255,0.25); }
+[data-tema="verde"] { --ac:#076b36; --acl:#cbf0db; --sidebar:#071a0e; --sidebar-active:rgba(7,107,54,0.3); }
+[data-tema="rojo"] { --ac:#b01c1c; --acl:#fde0e0; --sidebar:#1a0707; --sidebar-active:rgba(176,28,28,0.3); }
+[data-tema="morado"] { --ac:#5b21b6; --acl:#ede9fe; --sidebar:#1a0a2e; --sidebar-active:rgba(91,33,182,0.3); }
+[data-tema="naranja"] { --ac:#b45309; --acl:#fef3c7; --sidebar:#1a0d00; --sidebar-active:rgba(180,83,9,0.3); }
+[data-tema="negro"] { --bg:#1a1a18; --sf:#2a2a28; --tx:#f0efe9; --mt:#aaa; --ht:#666; --bd:rgba(255,255,255,0.1); --bds:rgba(255,255,255,0.2); --sidebar:#000; }
+/* Tamaños de fuente configurables */
+[data-size="pequeno"] { --fs:15px; --fsh:18px; --fsl:21px; }
+[data-size="mediano"] { --fs:17px; --fsh:20px; --fsl:23px; }
+[data-size="grande"] { --fs:19px; --fsh:22px; --fsl:26px; }
+[data-size="muygrande"] { --fs:22px; --fsh:26px; --fsl:30px; }
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:var(--fs)}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:var(--fs);line-height:1.5}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;background:var(--sidebar);padding:0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.logo{padding:22px 20px 18px;border-bottom:2px solid var(--sidebar-border)}
+.logo h1{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo p{font-size:13px;color:rgba(255,255,255,0.45);margin-top:3px}
+
+/* MENÚ — botones grandes y claros */
+.ni{display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer;font-size:18px;color:var(--sidebar-txt);border-left:4px solid transparent;transition:all .15s;font-weight:600;min-height:64px}
+.ni:hover{color:#fff;background:rgba(255,255,255,0.1)}
+.ni.active{color:#fff;border-left-color:var(--ac);background:var(--sidebar-active);font-weight:700}
+.nic{font-size:26px;width:32px;text-align:center;flex-shrink:0}
+
+/* ── MAIN ── */
+.shell{display:flex;min-height:100vh}
+.main{flex:1;overflow-y:auto;min-width:0}
+.ph{padding:28px 28px 0;margin-bottom:22px}
+.ph h2{font-size:var(--fsl);font-weight:700;color:var(--tx)}
+.ph p{font-size:17px;color:var(--mt);margin-top:5px}
+.content{padding:0 28px 40px}
+.page{display:none}.page.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--sf);border:2px solid var(--bd);border-radius:var(--r);padding:22px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}.card+.card{margin-top:16px}
+.ct{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--tx)}
+
+/* ── FORMULARIOS ── */
+.fr{display:grid;gap:14px;margin-bottom:14px}
+.fr.c2{grid-template-columns:1fr 1fr}.fr.c3{grid-template-columns:1fr 1fr 1fr}
+.fg label{font-size:15px;color:var(--mt);display:block;margin-bottom:6px;font-weight:700}
+.fg input,.fg select,.fg textarea{
+  width:100%;padding:14px 16px;
+  border:2px solid var(--bds);border-radius:var(--rs);
+  font-size:18px;font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--tx);
+  transition:border-color .15s;font-weight:500;
+  min-height:52px;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--ac);background:#fff;box-shadow:0 0 0 3px rgba(0,71,204,0.15)}
+.fg input[readonly]{background:#e8e7e1;color:var(--mt);font-size:15px;font-weight:400}
+textarea{resize:vertical;min-height:80px}
+
+/* ── BOTONES — MUY GRANDES ── */
+.br{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.btn{
+  padding:16px 24px;border-radius:var(--rs);
+  border:2px solid var(--bds);background:var(--sf);
+  cursor:pointer;font-size:18px;
+  font-family:'DM Sans',sans-serif;color:var(--tx);
+  transition:all .15s;font-weight:700;
+  display:inline-flex;align-items:center;gap:10px;
+  min-height:56px;line-height:1.2;
+}
+.btn:hover{background:var(--bg);transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.bp{background:var(--ac);color:#fff;border-color:var(--ac)}.bp:hover{background:#003baa}
+.bgn{background:var(--gn);color:#fff;border-color:var(--gn)}.bgn:hover{background:#055a2c}
+.bwa{background:#1a9c45;color:#fff;border-color:#1a9c45}.bwa:hover{background:#157a38}
+.bdn{color:var(--rd);border-color:var(--rd);border-width:2px}.bdn:hover{background:var(--rdl)}
+.bgh{border-color:transparent;background:none;color:var(--mt)}.bgh:hover{background:var(--bg);color:var(--tx)}
+.bsm{padding:12px 18px;font-size:16px;min-height:48px}
+.bf{width:100%;justify-content:center}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:8px;margin-bottom:20px;background:var(--bg);border-radius:var(--rs);padding:6px}
+.tab{flex:1;padding:14px 8px;border-radius:10px;border:none;background:none;cursor:pointer;font-size:16px;font-family:'DM Sans',sans-serif;color:var(--mt);font-weight:600;transition:all .15s;text-align:center;min-height:52px}
+.tab.active{background:var(--sf);color:var(--ac);font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+
+/* ── STATS ── */
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
+.stat{background:var(--sf);border:2px solid var(--bd);border-radius:var(--rs);padding:18px}
+.sv{font-size:30px;font-weight:800;color:var(--tx)}.sl{font-size:15px;color:var(--mt);margin-top:4px;font-weight:600}
+
+/* ── SCANNER ── */
+.sw{background:#0d0d0b;border-radius:var(--r);overflow:hidden;position:relative;min-height:220px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;cursor:pointer;border:3px solid #333}
+.sw video{width:100%;max-height:260px;object-fit:cover;display:none}
+.sph{text-align:center;color:#bbb;padding:20px}
+.sph .ic{font-size:52px;margin-bottom:12px}
+.sph p{font-size:18px;font-weight:600}
+.sph small{font-size:14px;color:#888;display:block;margin-top:5px}
+.saim{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+.sbox{width:200px;height:80px;border:4px solid #fff;border-radius:8px;position:relative;box-shadow:0 0 0 2000px rgba(0,0,0,0.5)}
+.sln{position:absolute;height:4px;background:#4d8fff;left:0;right:0;top:0;animation:sl 2s ease-in-out infinite;box-shadow:0 0 10px #4d8fff}
+@keyframes sl{0%,100%{top:0}50%{top:calc(100% - 4px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* ── TABLE ── */
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:16px}
+thead th{font-size:14px;font-weight:700;color:var(--mt);padding:12px 14px;border-bottom:3px solid var(--bd);text-align:left;white-space:nowrap;background:var(--bg)}
+tbody tr{border-bottom:2px solid var(--bd);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#edf2ff}
+td{padding:14px;font-size:16px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:100px;font-size:13px;font-weight:800;letter-spacing:.3px}
+.bb{background:var(--acl);color:var(--ac)}.bg2{background:var(--gnl);color:var(--gn)}.ba{background:var(--aml);color:var(--am)}.br2{background:var(--rdl);color:var(--rd)}
+
+/* ── SEARCH ── */
+.sr{display:flex;gap:10px;margin-bottom:18px}
+.sw3{position:relative;flex:1}.sw3 input{padding-left:42px;background:var(--sf)}
+.si{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--ht)}
+
+/* ── MODAL ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.ov.open{display:flex}
+.modal{background:var(--sf);border-radius:var(--r);padding:26px;width:100%;max-width:560px;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,0.25);border:2px solid var(--bd)}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid var(--bd);padding-bottom:16px}
+.mh h3{font-size:22px;font-weight:800}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.di{background:var(--bg);border-radius:var(--rs);padding:14px;border:1px solid var(--bd)}
+.di .lbl{font-size:12px;color:var(--mt);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.di .val{font-size:18px;font-weight:700;margin-top:4px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#0d0d0b;color:#fff;padding:14px 26px;border-radius:100px;font-size:17px;font-weight:600;z-index:2000;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 20px;color:var(--mt)}
+.empty .ei{font-size:56px;margin-bottom:16px}.empty p{font-size:18px;font-weight:500}
+
+/* ── PREVIEW PRODUCTO ── */
+.pp{background:var(--acl);border:3px solid var(--ac);border-radius:var(--rs);padding:18px;margin-bottom:14px;display:none}
+.pn{font-size:20px;font-weight:800}.pm{font-size:15px;color:var(--mt);margin-top:3px}.pprice{font-size:28px;font-weight:800;color:var(--ac)}
+.qrow{display:flex;align-items:center;gap:12px}
+.qbtn{width:44px;height:44px;border-radius:50%;border:3px solid var(--bds);background:var(--sf);cursor:pointer;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.qbtn:hover{background:var(--bg);border-color:var(--ac)}
+
+/* ── CARRITO ── */
+.irow{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border-radius:var(--rs);margin-bottom:7px;border:2px solid var(--bd)}
+.inm{flex:1;font-size:17px;font-weight:700}.ipr{font-size:17px;font-weight:800;color:var(--ac);min-width:75px;text-align:right}
+
+/* ── PRODUCTOS TOP (grid) ── */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.pcard{background:var(--sf);border:3px solid var(--bd);border-radius:var(--rs);padding:16px;cursor:pointer;transition:all .15s;text-align:center}
+.pcard:hover{border-color:var(--ac);background:var(--acl);transform:translateY(-3px);box-shadow:0 4px 12px rgba(0,71,204,0.2)}
+.pcard:active{transform:scale(.96)}
+.pcard img{width:64px;height:64px;object-fit:cover;border-radius:10px;margin-bottom:8px}
+.pcard .pio{font-size:40px;margin-bottom:8px}.pcard .pnom{font-size:15px;font-weight:700;line-height:1.3;margin-bottom:5px}
+.pcard .ppre{font-size:20px;font-weight:800;color:var(--ac)}.pcard .pstk{font-size:13px;color:var(--mt);font-weight:600}
+.pcard.ss{opacity:.4;pointer-events:none}
+
+/* ── FOTO ── */
+.foto-prev{width:100%;max-height:170px;object-fit:cover;border-radius:var(--rs);margin-top:10px;display:none;border:2px solid var(--bd)}
+.sep{border:none;border-top:2px solid var(--bd);margin:14px 0}
+
+/* ── WA CHECK ── */
+.wa-check{display:flex;align-items:center;gap:14px;background:#d4f0e2;border:2px solid #1a9c45;border-radius:var(--rs);padding:16px 18px;margin-bottom:14px}
+.wa-check input[type=checkbox]{width:28px;height:28px;cursor:pointer;accent-color:#1a9c45}
+.wa-check label{font-size:17px;font-weight:700;color:#055a2c;cursor:pointer}
+
+/* ── CATEGORÍAS ── */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.cat-btn{padding:16px 8px;border-radius:var(--rs);border:3px solid var(--bd);background:var(--sf);cursor:pointer;text-align:center;font-size:15px;font-weight:700;color:var(--tx);transition:all .15s;font-family:'DM Sans',sans-serif;min-height:80px}
+.cat-btn:hover{border-color:var(--ac);background:var(--acl)}.cat-btn.sel{border-color:var(--ac);background:var(--acl);color:var(--ac)}
+.cat-btn .cem{font-size:30px;display:block;margin-bottom:5px}
+
+/* ── HISTORIAL ── */
+.hist-venta{border:2px solid var(--bd);border-radius:var(--rs);margin-bottom:12px;overflow:hidden}
+.hist-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--bg);cursor:pointer;font-size:16px}
+.hist-body{padding:14px 16px;display:none}.hist-body.open{display:block}
+.prod-img-mini{width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0}
+
+/* ── REPORTES ── */
+.rfilters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.rfilters input,.rfilters select{padding:12px 14px;border:2px solid var(--bd);border-radius:var(--rs);font-size:16px;font-weight:600;background:var(--sf);color:var(--tx);font-family:'DM Sans',sans-serif;min-height:48px}
+.cat-report{background:var(--sf);border:2px solid var(--bd);border-radius:var(--rs);padding:18px;margin-bottom:12px}
+.cat-report-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.cat-emo{font-size:32px}.cat-report-title{font-size:18px;font-weight:800}
+.cat-bar{height:8px;background:var(--bg);border-radius:8px;margin-bottom:10px}
+.cat-bar-fill{height:100%;background:var(--ac);border-radius:8px;transition:width .5s}
+
+/* ── MOBILE — BARRA INFERIOR GRANDE ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .content{padding:0 14px 110px}
+  .ph{padding:18px 14px 0}
+  .pgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .fr.c3{grid-template-columns:1fr 1fr}
+  .mobile-bar{display:flex}
+}
+.mobile-bar{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:var(--sidebar);border-top:3px solid var(--sidebar-border);
+  padding:6px 4px 8px;gap:3px;z-index:100;
+}
+.mobile-bar .ni{
+  flex:1;justify-content:center;flex-direction:column;gap:3px;
+  font-size:11px;padding:7px 3px;border-left:none;border-radius:10px;
+  color:rgba(255,255,255,0.6);min-height:60px;
+}
+.mobile-bar .ni.active{background:rgba(77,143,255,0.3);color:#fff}
+.mobile-bar .nic{font-size:26px;width:auto}
+
+/* ── VOZ ── */
+#facturaCanvas{display:none}
+</style>
+</head>
+<body>
+<!-- ══ PANTALLA DE INICIO ══ -->
+<div id="splash" style="position:fixed;inset:0;background:#0d0d0b;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s">
+  <div id="splashLogo" style="font-size:72px;margin-bottom:16px;animation:pulse 1.5s infinite">📦</div>
+  <div id="splashNom" style="font-size:28px;font-weight:800;color:#fff;margin-bottom:8px">InventarioNube</div>
+  <div style="font-size:16px;color:rgba(255,255,255,0.5);margin-bottom:40px">Cargando...</div>
+  <div style="width:200px;height:4px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
+    <div id="splashBar" style="height:100%;background:#4d8fff;border-radius:4px;width:0%;transition:width .1s"></div>
+  </div>
+</div>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo"><h1 id="sideNom">📦 InventarioNube</h1><p id="sideDesc">Sistema de gestión</p></div>
+  <nav>
+    <div class="ni active" onclick="showPage('venta')"><span class="nic">🛒</span>Nueva Venta</div>
+    <div class="ni" onclick="showPage('registrar')"><span class="nic">➕</span>Registrar Producto</div>
+    <div class="ni" onclick="showPage('ventas')"><span class="nic">🧾</span>Ventas</div>
+    <div class="ni" onclick="showPage('clientes')"><span class="nic">👥</span>Clientes</div>
+    <div class="ni" onclick="showPage('inventario')"><span class="nic">🗃️</span>Inventario</div>
+    <div class="ni" onclick="showPage('reportes')"><span class="nic">📊</span>Reportes</div>
+    <div class="ni" onclick="showPage('config')"><span class="nic">⚙️</span>Configuración</div>
+  </nav>
+  <div style="margin-top:auto;padding:14px 16px;border-top:1px solid rgba(255,255,255,0.1)">
+    <button id="btnInstalarApp" onclick="instalarApp()" style="display:none;width:100%;background:#1a5cff;color:#fff;border:none;border-radius:var(--rs);padding:11px;font-size:13px;font-weight:600;cursor:pointer;align-items:center;justify-content:center;gap:7px;font-family:'DM Sans',sans-serif">
+      📲 Instalar como App
+    </button>
+    <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin-top:8px">InventarioNube v7</div>
+  </div>
+</aside>
+<main class="main">
+
+<!-- ══ NUEVA VENTA ══ -->
+<div id="page-venta" class="page active">
+  <div class="ph"><h2>🛒 Nueva Venta</h2><p>Escanea o selecciona productos</p></div>
+  <div class="content">
+    <!-- AVISO REGISTRAR -->
+    <div style="background:var(--aml);border:2px solid var(--am);border-radius:var(--rs);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--am)">¿El producto no aparece en la lista?</span>
+      <button class="btn bsm" style="background:var(--am);color:#fff;border-color:var(--am)" onclick="irRegistrar()">➕ Registrar producto nuevo</button>
+    </div>
+    <!-- WA CHECK -->
+    <div class="wa-check" id="waCheckBox">
+      <input type="checkbox" id="enviarWA" checked>
+      <label for="enviarWA">📲 Enviar factura + foto por WhatsApp al confirmar</label>
+    </div>
+    <!-- Búsqueda + Escáner unificados -->
+    <div class="card">
+      <div class="ct">🔍 Agregar producto al carrito</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div class="sw3 fg" style="flex:1"><span class="si">🔍</span><input type="text" id="vPB" placeholder="Escribe nombre, código o parte del nombre..." oninput="buscarPV(this.value)" onfocus="buscarPVManual()" style="padding-left:34px;font-size:15px"></div>
+        <button class="btn bp bsm" onclick="buscarPVManual()">Buscar</button>
+        <button class="btn bsm" id="btnVoz" onclick="toggleVoz()" title="Buscar por voz" style="background:#7c3aed;color:#fff;border-color:#7c3aed;font-size:18px;padding:9px 14px">🎤</button>
+      </div>
+      <!-- PANEL VOZ -->
+      <div id="vozPanel" style="display:none;background:#1e1b4b;border-radius:var(--rs);padding:16px;margin-bottom:10px;text-align:center">
+        <div style="font-size:13px;color:#a5b4fc;margin-bottom:8px;font-weight:600">🎤 Búsqueda por voz activa</div>
+        <div id="vozEstado" style="font-size:22px;font-weight:700;color:#fff;min-height:32px;margin-bottom:8px">Di el nombre del producto...</div>
+        <div id="vozTexto" style="font-size:13px;color:#6366f1;margin-bottom:12px;min-height:18px"></div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn bsm" id="btnVozAct" onclick="activarMicrofono()" style="background:#6366f1;color:#fff;border-color:#6366f1">🎙️ Hablar</button>
+          <button class="btn bsm" onclick="cerrarVoz()" style="color:#a5b4fc;border-color:#a5b4fc;background:none">✕ Cerrar</button>
+        </div>
+        <div style="font-size:11px;color:#6366f1;margin-top:8px">Habla claramente: "Coca Cola", "Leche entera", "Arroz"...</div>
+      </div>
+      <div id="pvRes" style="display:none;background:var(--bg);border-radius:var(--rs);border:2px solid var(--bd);max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <hr style="flex:1;border:none;border-top:1px solid var(--bd)">
+        <span style="font-size:12px;color:var(--mt);font-weight:500">o escanea con la cámara</span>
+        <hr style="flex:1;border:none;border-top:1px solid var(--bd)">
+      </div>
+      <div class="sw" id="swV" onclick="if(!camVOn)toggleCamV()" style="min-height:150px">
+        <div class="sph" id="sphV"><div class="ic" style="font-size:34px">📷</div><p style="font-size:14px">Toca para activar cámara</p><small>Apunta el código de barras al recuadro blanco</small></div>
+        <video id="vidV" autoplay playsinline muted></video>
+        <div class="saim" id="saimV"><div class="sbox"><div class="sln"></div></div></div>
+      </div>
+      <div class="br">
+        <button class="btn bp" id="btnCV" onclick="toggleCamV()">📷 Activar cámara</button>
+        <button class="btn" id="btnCapV" style="display:none" onclick="detCamV()">⏹ Detener cámara</button>
+      </div>
+    </div>
+    <!-- Preview producto -->
+    <div class="pp" id="prodPrev">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div class="pn" id="pvNom">—</div><div class="pm" id="pvMeta">—</div></div>
+        <div class="pprice" id="pvPre">$0.00</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="qrow">
+          <button class="qbtn" onclick="chPv(-1)">−</button>
+          <span id="pvCant" style="font-size:19px;font-weight:700;min-width:26px;text-align:center">1</span>
+          <button class="qbtn" onclick="chPv(1)">+</button>
+        </div>
+        <button class="btn bgn" onclick="addPvCarrito()">✓ Agregar al carrito</button>
+      </div>
+    </div>
+    <!-- Top productos -->
+    <div class="card"><div class="ct">⭐ Productos frecuentes</div><div class="pgrid" id="topP" style="grid-template-columns:repeat(2,1fr)">
+      <div style="grid-column:1/-1;text-align:center;color:var(--mt);padding:14px;font-size:13px">Cargando...</div>
+    </div></div>
+    <!-- Cliente -->
+    <div class="card">
+      <div class="ct">👤 Cliente</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div class="sw3 fg" style="flex:1"><span class="si">🔍</span><input type="text" id="vCB" placeholder="Buscar por nombre o cédula..." oninput="buscarCli(this.value)" style="padding-left:34px"></div>
+        <button class="btn bsm" onclick="activarMicCliente()" title="Buscar cliente por voz" style="background:#7c3aed;color:#fff;border-color:#7c3aed;font-size:16px;padding:9px 12px">🎤</button>
+        <button class="btn bsm" onclick="showMCli()">+ Nuevo</button>
+      </div>
+      <div id="cliRes" style="display:none;background:var(--bg);border-radius:var(--rs);border:2px solid var(--bd);max-height:140px;overflow-y:auto;margin-bottom:8px"></div>
+      <div id="cliSel" style="display:none;background:var(--gnl);border:2px solid var(--gn);border-radius:var(--rs);padding:12px">
+        <div style="font-size:16px;font-weight:700" id="vCNom">—</div>
+        <div style="font-size:12px;color:var(--mt);margin-top:2px" id="vCInf">—</div>
+        <button class="btn bgh bsm" style="margin-top:7px" onclick="limpCli()">Cambiar</button>
+      </div>
+      <input type="hidden" id="vCId">
+    </div>
+    <!-- Carrito -->
+    <div class="card">
+      <div class="ct">🛒 Carrito</div>
+      <div id="carritoEl"><div style="text-align:center;color:var(--mt);font-size:13px;padding:14px">Sin productos</div></div>
+      <hr class="sep">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px"><span style="color:var(--mt);font-weight:500">Subtotal</span><span id="vSub" style="font-weight:600">$0.00</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:14px;margin-bottom:5px">
+        <span style="color:var(--mt);font-weight:500">Descuento ($)</span>
+        <input type="number" id="vDesc" value="0" min="0" step="0.01" style="width:75px;padding:5px 9px;border:2px solid var(--bd);border-radius:var(--rs);font-size:14px;font-weight:600;text-align:right" oninput="calcT()">
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:19px;font-weight:700"><span>TOTAL</span><span id="vTot" style="color:var(--ac)">$0.00</span></div>
+    </div>
+    <!-- Pago -->
+    <div class="card">
+      <div class="ct">💳 Forma de pago</div>
+      <div class="fr c2">
+        <div class="fg"><label>Modalidad</label><select id="vTP" onchange="togCred()"><option value="contado">Contado</option><option value="credito">Crédito</option></select></div>
+        <div class="fg"><label>Método</label><select id="vMet"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option></select></div>
+      </div>
+      <div id="credOpts" style="display:none">
+        <div class="fr c2">
+          <div class="fg"><label>Plazo (días)</label><input type="number" id="vPlazo" placeholder="30" min="1" oninput="calcCuota()"></div>
+          <div class="fg"><label>Cuotas</label><input type="number" id="vCuotas" placeholder="1" min="1" value="1" oninput="calcCuota()"></div>
+        </div>
+        <div id="vCuotaI" style="font-size:13px;color:var(--am);font-weight:500;background:var(--aml);padding:8px 12px;border-radius:var(--rs);margin-top:4px"></div>
+      </div>
+      <div class="fr" style="margin-top:10px"><div class="fg"><label>Notas</label><input type="text" id="vNot" placeholder="Observaciones..."></div></div>
+      <div class="br"><button class="btn bgn bf" onclick="confirmarVenta()" style="font-size:22px;padding:20px;border-radius:14px;letter-spacing:.5px;box-shadow:0 4px 12px rgba(7,107,54,0.35)">✓ CONFIRMAR Y FACTURAR</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REGISTRAR PRODUCTO ══ -->
+<div id="page-registrar" class="page">
+  <div class="ph"><h2>➕ Registrar Producto</h2><p>Elige cómo quieres registrar</p></div>
+  <div class="content">
+    <div class="tabs">
+      <button class="tab active" onclick="swReg('scan')">📷 Código barras</button>
+      <button class="tab" onclick="swReg('manual')">⌨️ Manual</button>
+      <button class="tab" onclick="swReg('tipo')">📋 Por tipo</button>
+    </div>
+    <!-- SCAN -->
+    <div id="tabScan">
+      <div class="card">
+        <div class="sw" id="swI" onclick="if(!camIOn)toggleCamI()">
+          <div class="sph" id="sphI"><div class="ic">📷</div><p>Toca para activar cámara</p><small>Apunta el código al recuadro</small></div>
+          <video id="vidI" autoplay playsinline muted></video>
+          <div class="saim" id="saimI"><div class="sbox"><div class="sln"></div></div></div>
+        </div>
+        <div class="br">
+          <button class="btn bp" id="btnCI" onclick="toggleCamI()">📷 Activar cámara</button>
+          <button class="btn" id="btnCapI" style="display:none" onclick="detCamI()">⏹ Detener</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <div style="display:flex;gap:8px">
+          <div class="fg" style="flex:1"><label>O escribe el código</label><input type="text" id="codI" placeholder="Ej: 7501055300685" oninput="onCodI(this.value)"></div>
+          <div style="padding-top:20px"><button class="btn bsm" onclick="buscarCodI()">Buscar</button></div>
+        </div>
+      </div>
+    </div>
+    <!-- MANUAL -->
+    <div id="tabManual" style="display:none">
+      <div class="card">
+        <div class="ct">Ingresar código manualmente</div>
+        <div class="fg" style="margin-bottom:12px"><label>Código (puedes inventarlo si no tiene)</label><input type="text" id="codMan" placeholder="Ej: PROD-001"></div>
+        <button class="btn bp" onclick="usarCodMan()">Continuar →</button>
+      </div>
+    </div>
+    <!-- POR TIPO -->
+    <div id="tabTipo" style="display:none">
+      <div class="card">
+        <div class="ct">Selecciona el tipo de producto</div>
+        <div class="cat-grid" id="catGrid">
+          <div style="grid-column:1/-1;text-align:center;color:var(--mt);padding:14px">Cargando categorías...</div>
+        </div>
+      </div>
+    </div>
+    <!-- FORM PRODUCTO -->
+    <div class="card" id="formP" style="display:none;margin-top:12px">
+      <div class="ct" id="formTit">📦 Datos del producto</div>
+      <input type="hidden" id="fId">
+      <div class="fr"><div class="fg"><label>Código de barras</label><input type="text" id="fCod" readonly></div></div>
+      <div class="fr"><div class="fg"><label>Nombre *</label><input type="text" id="fNom" placeholder="Ej: Coca Cola 600ml" style="font-size:15px"></div></div>
+      <!-- Selector de categoría con botones -->
+      <div class="fr">
+        <div class="fg">
+          <label>Categoría — <button type="button" class="btn bgh bsm" style="padding:3px 8px;font-size:11px" onclick="showMCat()">+ Nueva categoría</button></label>
+          <div class="cat-grid" id="catSelGrid" style="margin-top:6px">
+            <div style="grid-column:1/-1;text-align:center;color:var(--mt);padding:8px;font-size:12px">Cargando...</div>
+          </div>
+          <input type="hidden" id="fCat" value="Otro">
+        </div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label>Precio ($)</label><input type="number" id="fPrecio" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="fg"><label>Stock inicial</label><input type="number" id="fStock" placeholder="0" min="0"></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label>Unidad</label><select id="fUnidad"><option value="unidad">Unidad</option><option value="kg">Kg</option><option value="litro">Litro</option><option value="caja">Caja</option><option value="paquete">Paquete</option></select></div>
+        <div class="fg"><label>Proveedor</label><input type="text" id="fProv" placeholder="Proveedor"></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label>Ubicación</label><input type="text" id="fUbic" placeholder="Estante A-3"></div>
+      </div>
+      <div class="fr"><div class="fg"><label>Notas</label><textarea id="fNotas" placeholder="Descripción, vencimiento..."></textarea></div></div>
+      <!-- FOTO -->
+      <div class="card" style="background:var(--bg);border:2px dashed var(--bd);margin-top:6px">
+        <div class="ct" style="font-size:13px">📸 Foto del producto (opcional)</div>
+        <div class="sw" id="swF" style="min-height:130px;margin-bottom:8px" onclick="if(!camFOn)toggleCamF()">
+          <div class="sph" id="sphF"><div class="ic" style="font-size:32px">📷</div><p style="font-size:13px">Toca para fotografiar</p></div>
+          <video id="vidF" autoplay playsinline muted style="max-height:170px"></video>
+        </div>
+        <img id="fotoPrev" class="foto-prev" alt="Foto">
+        <div class="br">
+          <button class="btn bsm" id="btnCF" onclick="toggleCamF()">📷 Tomar foto</button>
+          <button class="btn bp bsm" id="btnCapF" style="display:none" onclick="capturarFoto()">⊙ Capturar</button>
+          <button class="btn bgh bsm" id="btnQF" style="display:none" onclick="quitarFoto()">✕ Quitar</button>
+        </div>
+      </div>
+      <div class="br" style="margin-top:14px">
+        <button class="btn bgn" style="font-size:15px;padding:13px 22px" onclick="guardarProd()">💾 Guardar en inventario</button>
+        <button class="btn bgh" onclick="limpiarF()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VENTAS ══ -->
+<div id="page-ventas" class="page">
+  <div class="ph"><h2>🧾 Ventas</h2></div>
+  <div class="content">
+    <div class="rfilters">
+      <div class="sw3" style="flex:1;min-width:160px"><span class="si">🔍</span><input type="text" id="vSearch" placeholder="N°, cliente, cédula..." oninput="cargarVentas()" style="padding-left:34px;width:100%"></div>
+      <select id="vEstado" onchange="cargarVentas()" style=""><option value="">Todas</option><option value="pagada">Pagadas</option><option value="credito">Crédito</option></select>
+      <input type="date" id="vDesde" onchange="cargarVentas()">
+      <input type="date" id="vHasta" onchange="cargarVentas()">
+      <button class="btn bsm" onclick="limpFiltrosV()">✕ Limpiar</button>
+    </div>
+    <div class="card" style="padding:0"><div class="twrap"><table>
+      <thead><tr><th>Factura</th><th>Cliente</th><th>Total</th><th>Saldo</th><th>Estado</th><th>Fecha</th><th>WA</th></tr></thead>
+      <tbody id="tbV"></tbody>
+    </table></div></div>
+  </div>
+</div>
+
+<!-- ══ CLIENTES ══ -->
+<div id="page-clientes" class="page">
+  <div class="ph"><h2>👥 Clientes</h2></div>
+  <div class="content">
+    <div class="sr">
+      <div class="sw3"><span class="si">🔍</span><input type="text" id="cliSearch" placeholder="Nombre, cédula..." oninput="cargarClis()"></div>
+      <button class="btn bp bsm" onclick="showMCli()">+ Nuevo</button>
+    </div>
+    <div class="card" style="padding:0"><div class="twrap"><table>
+      <thead><tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>WA</th><th>Ventas</th><th>Saldo</th></tr></thead>
+      <tbody id="tbCli"></tbody>
+    </table></div></div>
+  </div>
+</div>
+
+<!-- ══ INVENTARIO ══ -->
+<div id="page-inventario" class="page">
+  <div class="ph"><h2>🗃️ Inventario</h2></div>
+  <div class="content">
+    <div class="sr">
+      <div class="sw3"><span class="si">🔍</span><input type="text" id="invS" placeholder="Nombre, código..." oninput="cargarInv()"></div>
+      <select id="invCat" onchange="cargarInv()" style="padding:10px 12px;border:2px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:600;background:var(--sf);color:var(--tx);font-family:'DM Sans',sans-serif"><option value="">Todas</option></select>
+    </div>
+    <div class="card" style="padding:0"><div class="twrap"><table>
+      <thead><tr><th>#</th><th>Foto</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Valor</th></tr></thead>
+      <tbody id="tbInv"></tbody>
+    </table></div></div>
+  </div>
+</div>
+
+<!-- ══ REPORTES ══ -->
+<div id="page-reportes" class="page">
+  <div class="ph"><h2>📊 Reportes</h2></div>
+  <div class="content">
+    <div class="tabs">
+      <button class="tab active" onclick="swRep('ventas')">🧾 Ventas</button>
+      <button class="tab" onclick="swRep('inventario')">🗃️ Inventario</button>
+      <button class="tab" onclick="swRep('creditos')">⚠️ Créditos</button>
+    </div>
+    <div id="repVentas">
+      <div class="rfilters">
+        <input type="date" id="rDesde" onchange="cargarRepV()">
+        <input type="date" id="rHasta" onchange="cargarRepV()">
+        <select id="rEstado" onchange="cargarRepV()" style="padding:9px 12px;border:2px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--sf);font-family:'DM Sans',sans-serif"><option value="">Todos</option><option value="pagada">Pagadas</option><option value="credito">Crédito</option></select>
+        <button class="btn bsm bwa" onclick="enviarReporteWA()">📲 Enviar reporte WA</button>
+      </div>
+      <div class="sgrid" id="repStats"></div>
+      <div class="card" style="padding:0"><div class="twrap"><table>
+        <thead><tr><th>Factura</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th><th>WA</th></tr></thead>
+        <tbody id="tbRV"></tbody>
+      </table></div></div>
+    </div>
+    <div id="repInventario" style="display:none" id="repInv">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn bwa bsm" onclick="enviarInvWA()">📲 Enviar inventario WA</button>
+      </div>
+      <div id="repInvContent"></div>
+    </div>
+    <div id="repCreditos" style="display:none">
+      <div id="repCreditosContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIG ══ -->
+<div id="page-config" class="page">
+  <div class="ph"><h2>⚙️ Configuración</h2></div>
+  <div class="content">
+    <!-- SELECTOR DE TEMA -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct">🎨 Tema y colores de la app</div>
+      <div style="font-size:15px;color:var(--mt);margin-bottom:14px;font-weight:500">Elige el color principal de la app:</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="temasGrid">
+        <button onclick="aplicarTema('azul')" class="tema-btn" data-tema="azul" style="background:#0047cc;border:3px solid #0047cc;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🔵<br>Azul</button>
+        <button onclick="aplicarTema('verde')" class="tema-btn" data-tema="verde" style="background:#076b36;border:3px solid #076b36;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🟢<br>Verde</button>
+        <button onclick="aplicarTema('morado')" class="tema-btn" data-tema="morado" style="background:#5b21b6;border:3px solid #5b21b6;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🟣<br>Morado</button>
+        <button onclick="aplicarTema('rojo')" class="tema-btn" data-tema="rojo" style="background:#b91c1c;border:3px solid #b91c1c;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🔴<br>Rojo</button>
+        <button onclick="aplicarTema('naranja')" class="tema-btn" data-tema="naranja" style="background:#c2410c;border:3px solid #c2410c;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🟠<br>Naranja</button>
+        <button onclick="aplicarTema('negro')" class="tema-btn" data-tema="negro" style="background:#1a1a1a;border:3px solid #555;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">⚫<br>Oscuro</button>
+        <button onclick="aplicarTema('claro')" class="tema-btn" data-tema="claro" style="background:#f0f0f0;border:3px solid #bbb;border-radius:12px;padding:14px 8px;cursor:pointer;color:#333;font-size:14px;font-weight:700;min-height:64px">⚪<br>Claro</button>
+        <button onclick="aplicarTema('cafe')" class="tema-btn" data-tema="cafe" style="background:#92400e;border:3px solid #92400e;border-radius:12px;padding:14px 8px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;min-height:64px">🟤<br>Café</button>
+      </div>
+      <div style="font-size:15px;color:var(--mt);margin-bottom:10px;font-weight:500">Tamaño del texto:</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="aplicarTamano('normal')" style="flex:1;padding:14px;border:2px solid var(--bds);border-radius:var(--rs);background:var(--sf);cursor:pointer;font-size:17px;font-weight:700;font-family:'DM Sans',sans-serif">Aa Normal</button>
+        <button onclick="aplicarTamano('grande')" style="flex:1;padding:14px;border:2px solid var(--bds);border-radius:var(--rs);background:var(--sf);cursor:pointer;font-size:20px;font-weight:700;font-family:'DM Sans',sans-serif">Aa Grande</button>
+        <button onclick="aplicarTamano('muygrande')" style="flex:1;padding:14px;border:2px solid var(--bds);border-radius:var(--rs);background:var(--sf);cursor:pointer;font-size:23px;font-weight:700;font-family:'DM Sans',sans-serif">Aa Muy grande</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Datos del negocio</div>
+      <div class="fr c2">
+        <div class="fg"><label>Emoji logo</label><input type="text" id="cfgL" placeholder="🏪" maxlength="4"></div>
+        <div class="fg"><label>Nombre *</label><input type="text" id="cfgN" placeholder="Mi Tienda" oninput="prevCfg()"></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label>RUC</label><input type="text" id="cfgR" placeholder="1234567890001" oninput="prevCfg()"></div>
+        <div class="fg"><label>Teléfono</label><input type="text" id="cfgT" placeholder="0987654321" oninput="prevCfg()"></div>
+      </div>
+      <div class="fr"><div class="fg"><label>Dirección</label><input type="text" id="cfgD" placeholder="Av. Principal, Ciudad" oninput="prevCfg()"></div></div>
+      <div class="fr"><div class="fg"><label>Pie de página factura</label><input type="text" id="cfgP" placeholder="Gracias por su compra"></div></div>
+      <div class="fr c2">
+        <div class="fg"><label>WhatsApp administrador (reportes)</label><input type="text" id="cfgWA" placeholder="593987654321"></div>
+        <div class="fg"><label>Email administrador</label><input type="text" id="cfgEM" placeholder="admin@minegocio.com"></div>
+      </div>
+      <div class="br"><button class="btn bp" onclick="guardarCfg()">💾 Guardar</button></div>
+    </div>
+    <div class="card">
+      <div class="ct">Vista previa del encabezado de factura</div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:16px;text-align:center;border:2px dashed var(--bd)">
+        <div id="pvL" style="font-size:32px;margin-bottom:5px">🏪</div>
+        <div id="pvN" style="font-size:17px;font-weight:700">Mi Negocio</div>
+        <div id="pvR" style="font-size:12px;color:var(--mt);margin-top:2px">RUC: —</div>
+        <div id="pvTD" style="font-size:12px;color:var(--mt)">— · —</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Categorías de productos</div>
+      <div id="catListCfg" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <div class="fg" style="flex:1"><input type="text" id="newCatEmoji" placeholder="🆕" style="width:60px;display:inline-block;margin-right:8px"><input type="text" id="newCatNom" placeholder="Nueva categoría..." style="width:calc(100% - 76px);display:inline-block"></div>
+        <button class="btn bp bsm" onclick="agregarCat()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PANTALLA DE BIENVENIDA ══ -->
+<div id="page-bienvenida" class="page" style="min-height:100vh;display:none">
+  <div style="max-width:480px;margin:0 auto;padding:40px 28px;text-align:center">
+    <div id="splashLogo" style="font-size:72px;margin-bottom:16px">📦</div>
+    <h1 id="splashNom" style="font-size:32px;font-weight:800;margin-bottom:8px">InventarioNube</h1>
+    <p id="splashDesc" style="font-size:18px;color:var(--mt);margin-bottom:48px">Sistema de gestión</p>
+    <!-- MENÚ GRANDE EN TARJETAS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px">
+      <div onclick="showPage('venta')" style="background:var(--sf);border:3px solid var(--ac);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">🛒</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ac)">Nueva Venta</div>
+      </div>
+      <div onclick="showPage('registrar')" style="background:var(--sf);border:3px solid var(--gn);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--gnl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">➕</div>
+        <div style="font-size:18px;font-weight:800;color:var(--gn)">Registrar Producto</div>
+      </div>
+      <div onclick="showPage('ventas')" style="background:var(--sf);border:3px solid var(--bd);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">🧾</div>
+        <div style="font-size:18px;font-weight:700">Ventas</div>
+      </div>
+      <div onclick="showPage('clientes')" style="background:var(--sf);border:3px solid var(--bd);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">👥</div>
+        <div style="font-size:18px;font-weight:700">Clientes</div>
+      </div>
+      <div onclick="showPage('inventario')" style="background:var(--sf);border:3px solid var(--bd);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">🗃️</div>
+        <div style="font-size:18px;font-weight:700">Inventario</div>
+      </div>
+      <div onclick="showPage('reportes')" style="background:var(--sf);border:3px solid var(--bd);border-radius:var(--r);padding:24px 16px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--sf)'">
+        <div style="font-size:44px;margin-bottom:10px">📊</div>
+        <div style="font-size:18px;font-weight:700">Reportes</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn bsm" onclick="showPage('config')" style="font-size:15px">⚙️ Configuración</button>
+      <button class="btn bsm" onclick="showPage('temas')" style="font-size:15px;background:var(--ac);color:#fff;border-color:var(--ac)">🎨 Cambiar diseño</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEMAS Y APARIENCIA ══ -->
+<div id="page-temas" class="page">
+  <div class="ph"><h2>🎨 Apariencia</h2><p>Personaliza colores y tamaño de letra</p></div>
+  <div class="content">
+    <!-- COLOR -->
+    <div class="card">
+      <div class="ct">Color principal</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div onclick="aplicarTema('azul')" style="background:#0047cc;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-azul">🔵 Azul</div>
+        <div onclick="aplicarTema('verde')" style="background:#076b36;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-verde">🟢 Verde</div>
+        <div onclick="aplicarTema('rojo')" style="background:#b01c1c;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-rojo">🔴 Rojo</div>
+        <div onclick="aplicarTema('morado')" style="background:#5b21b6;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-morado">🟣 Morado</div>
+        <div onclick="aplicarTema('naranja')" style="background:#b45309;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-naranja">🟠 Naranja</div>
+        <div onclick="aplicarTema('negro')" style="background:#1a1a18;border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;color:#fff;font-size:16px;font-weight:700;border:3px solid transparent" id="tema-negro">⚫ Oscuro</div>
+      </div>
+    </div>
+    <!-- TAMAÑO LETRA -->
+    <div class="card">
+      <div class="ct">Tamaño de letra</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <button onclick="aplicarTamano('pequeno')" id="size-pequeno" class="btn" style="font-size:14px;justify-content:center">A pequeño</button>
+        <button onclick="aplicarTamano('mediano')" id="size-mediano" class="btn" style="font-size:17px;justify-content:center">A mediano</button>
+        <button onclick="aplicarTamano('grande')" id="size-grande" class="btn bp" style="font-size:20px;justify-content:center">A grande ✓</button>
+        <button onclick="aplicarTamano('muygrande')" id="size-muygrande" class="btn" style="font-size:23px;justify-content:center">A muy grande</button>
+      </div>
+    </div>
+    <!-- PANTALLA INICIO -->
+    <div class="card">
+      <div class="ct">Pantalla de inicio</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button onclick="setPantallaInicio('bienvenida')" id="inicio-bienvenida" class="btn bp" style="justify-content:center;font-size:16px">🏠 Menú inicio ✓</button>
+        <button onclick="setPantallaInicio('venta')" id="inicio-venta" class="btn" style="justify-content:center;font-size:16px">🛒 Nueva Venta</button>
+      </div>
+      <p style="font-size:14px;color:var(--mt);margin-top:10px">Elige qué pantalla ver al abrir la app</p>
+    </div>
+    <div class="br">
+      <button class="btn bgn" onclick="showPage('bienvenida')">✓ Ver pantalla de inicio</button>
+      <button class="btn bgh" onclick="showPage('venta')">Ir a Nueva Venta</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<div class="mobile-bar">
+  <div class="ni active" onclick="showPage('venta')"><span class="nic">🛒</span>Venta</div>
+  <div class="ni" onclick="showPage('registrar')"><span class="nic">➕</span>Registrar</div>
+  <div class="ni" onclick="showPage('ventas')"><span class="nic">🧾</span>Ventas</div>
+  <div class="ni" onclick="showPage('clientes')"><span class="nic">👥</span>Clientes</div>
+  <div class="ni" onclick="showPage('inventario')"><span class="nic">🗃️</span>Inventario</div>
+  <div class="ni" onclick="showPage('reportes')"><span class="nic">📊</span>Reportes</div>
+</div>
+
+<!-- MODALES -->
+<div class="ov" id="ovCli" onclick="if(event.target===this)cerrarOv('ovCli')">
+  <div class="modal">
+    <div class="mh"><h3>👤 Nuevo cliente</h3><button class="btn bgh bsm" onclick="cerrarOv('ovCli')">✕</button></div>
+    <div class="fr"><div class="fg"><label>Nombre completo *</label><input type="text" id="cNom" placeholder="Juan Pérez"></div></div>
+    <div class="fr c2">
+      <div class="fg"><label>Cédula / RUC *</label><input type="text" id="cCed" placeholder="1234567890"></div>
+      <div class="fg"><label>Teléfono</label><input type="text" id="cTel" placeholder="0987654321"></div>
+    </div>
+    <div class="fr"><div class="fg"><label>WhatsApp (con código país ej: 593987654321)</label><input type="text" id="cWA" placeholder="593987654321"></div></div>
+    <div class="fr"><div class="fg"><label>Dirección</label><textarea id="cDir" placeholder="Calle, ciudad..."></textarea></div></div>
+    <div class="br"><button class="btn bgn bf" onclick="guardarCli()">Guardar cliente</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ovVenta" onclick="if(event.target===this)cerrarOv('ovVenta')">
+  <div class="modal" style="max-width:560px">
+    <div class="mh"><h3 id="ovVTit">🧾 Factura</h3><button class="btn bgh bsm" onclick="cerrarOv('ovVenta')">✕</button></div>
+    <div id="ovVBody"></div>
+    <div class="br" style="margin-top:14px;flex-wrap:wrap">
+      <button class="btn bp" onclick="descargarJPG()">📷 Descargar JPG</button>
+      <button class="btn bwa" id="btnWALink" onclick="enviarWALink()" style="display:none">📲 WhatsApp (link)</button>
+      <button class="btn bwa" id="btnWAAPI" onclick="enviarWAAPI()" style="display:none">📲 WhatsApp Business</button>
+      <button class="btn" id="btnPago" onclick="showMPago()" style="display:none">💵 Registrar pago</button>
+      <button class="btn bgh" onclick="cerrarOv('ovVenta')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovPago" onclick="if(event.target===this)cerrarOv('ovPago')">
+  <div class="modal" style="max-width:360px">
+    <div class="mh"><h3>💵 Registrar pago</h3><button class="btn bgh bsm" onclick="cerrarOv('ovPago')">✕</button></div>
+    <div style="margin-bottom:10px;font-size:14px">Saldo: <strong id="pagoS" style="color:var(--rd);font-size:17px">$0.00</strong></div>
+    <div class="fr c2">
+      <div class="fg"><label>Monto ($)*</label><input type="number" id="pagoM" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Método</label><select id="pagoMet"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option></select></div>
+    </div>
+    <div class="fr"><div class="fg"><label>Referencia</label><input type="text" id="pagoRef" placeholder="N° transferencia..."></div></div>
+    <div class="br"><button class="btn bgn bf" onclick="confirmarPago()">Confirmar pago</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ovCliDet" onclick="if(event.target===this)cerrarOv('ovCliDet')">
+  <div class="modal" style="max-width:600px">
+    <div class="mh"><h3 id="ovCDTit">Cliente</h3><button class="btn bgh bsm" onclick="cerrarOv('ovCliDet')">✕</button></div>
+    <div id="ovCDBody"></div>
+    <div class="br">
+      <button class="btn bp" id="btnHistorial" onclick="verHistorial()">📋 Ver historial completo</button>
+      <button class="btn bwa" id="btnWACli" onclick="enviarWACli()" style="display:none">📲 WhatsApp</button>
+      <button class="btn bgh" onclick="cerrarOv('ovCliDet')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovHistorial" onclick="if(event.target===this)cerrarOv('ovHistorial')">
+  <div class="modal" style="max-width:640px">
+    <div class="mh"><h3 id="ovHisTit">📋 Historial</h3><button class="btn bgh bsm" onclick="cerrarOv('ovHistorial')">✕</button></div>
+    <div class="rfilters" style="margin-bottom:12px">
+      <input type="date" id="hDesde"><input type="date" id="hHasta">
+      <select id="hEstado" style="padding:9px 12px;border:2px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--sf);font-family:'DM Sans',sans-serif"><option value="">Todos</option><option value="pagada">Pagadas</option><option value="credito">Crédito</option></select>
+      <button class="btn bp bsm" onclick="filtrarHistorial()">Filtrar</button>
+    </div>
+    <div class="sgrid" id="histStats" style="grid-template-columns:repeat(3,1fr)"></div>
+    <div id="histBody" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="br" style="margin-top:12px">
+      <button class="btn bwa bsm" id="btnWAHistorial" onclick="enviarHistorialWA()">📲 Enviar resumen WA</button>
+      <button class="btn bgh bsm" onclick="cerrarOv('ovHistorial')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovCat" onclick="if(event.target===this)cerrarOv('ovCat')">
+  <div class="modal" style="max-width:360px">
+    <div class="mh"><h3>➕ Nueva categoría</h3><button class="btn bgh bsm" onclick="cerrarOv('ovCat')">✕</button></div>
+    <div class="fr c2">
+      <div class="fg"><label>Emoji</label><input type="text" id="nCatE" placeholder="🆕" maxlength="4"></div>
+      <div class="fg"><label>Nombre *</label><input type="text" id="nCatN" placeholder="Nombre categoría"></div>
+    </div>
+    <div class="br"><button class="btn bgn bf" onclick="crearCatModal()">Crear categoría</button></div>
+  </div>
+</div>
+
+<!-- MODAL VOZ - CONFIRMAR PRODUCTO -->
+<div class="ov" id="ovVozConfirm" onclick="if(event.target===this)cerrarOv('ovVozConfirm')">
+  <div class="modal" style="max-width:480px;background:#1e1b4b;border:2px solid #6366f1">
+    <div class="mh" style="border-bottom:1px solid #312e81;padding-bottom:12px;margin-bottom:16px">
+      <h3 style="color:#fff">🎤 Producto detectado por voz</h3>
+      <button class="btn bgh bsm" onclick="cerrarOv('ovVozConfirm')" style="color:#a5b4fc">✕</button>
+    </div>
+    <div style="font-size:13px;color:#a5b4fc;margin-bottom:8px">Escuché:</div>
+    <div id="vozTextoEscuchado" style="background:#312e81;border-radius:var(--rs);padding:12px;font-size:16px;font-weight:700;color:#fff;margin-bottom:16px;text-align:center">—</div>
+    <div style="font-size:13px;color:#a5b4fc;margin-bottom:10px">Resultados encontrados:</div>
+    <div id="vozResultados" style="max-height:240px;overflow-y:auto;margin-bottom:16px"></div>
+    <div class="br" style="flex-wrap:wrap">
+      <button class="btn bsm" onclick="activarMicrofono()" style="background:#6366f1;color:#fff;border-color:#6366f1">🎙️ Intentar de nuevo</button>
+      <button class="btn bsm" onclick="abrirRegistroVoz()" style="background:var(--am);color:#fff;border-color:var(--am)">➕ No existe — registrar</button>
+      <button class="btn bgh bsm" onclick="cerrarOv('ovVozConfirm')" style="color:#a5b4fc;border-color:#6366f1">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VOZ - REGISTRO RÁPIDO -->
+<div class="ov" id="ovVozRegistro" onclick="if(event.target===this)cerrarOv('ovVozRegistro')">
+  <div class="modal" style="max-width:440px;background:#1e1b4b;border:2px solid var(--am)">
+    <div class="mh" style="border-bottom:1px solid #312e81;padding-bottom:12px;margin-bottom:16px">
+      <h3 style="color:#fff">➕ Registro rápido por voz</h3>
+      <button class="btn bgh bsm" onclick="cerrarOv('ovVozRegistro')" style="color:#a5b4fc">✕</button>
+    </div>
+    <div style="font-size:13px;color:#a5b4fc;margin-bottom:12px">Di el <strong style="color:#fcd34d">nombre</strong> y el <strong style="color:#fcd34d">precio</strong> del producto:</div>
+    <div id="vozRegEstado" style="background:#312e81;border-radius:var(--rs);padding:14px;text-align:center;margin-bottom:14px">
+      <div style="font-size:20px;font-weight:700;color:#fff;min-height:28px" id="vozRegTexto">Toca el micrófono...</div>
+      <div style="font-size:11px;color:#6366f1;margin-top:6px">Ejemplo: "Arroz cinco dólares" o "Jabón dos cincuenta"</div>
+    </div>
+    <div class="br" style="justify-content:center;margin-bottom:14px">
+      <button class="btn" id="btnVozReg" onclick="activarMicVozReg()" style="background:#6366f1;color:#fff;border-color:#6366f1;font-size:16px;padding:12px 24px">🎙️ Hablar ahora</button>
+    </div>
+    <div style="background:#0f0a2e;border-radius:var(--rs);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;color:#a5b4fc;margin-bottom:8px;font-weight:600">Datos detectados — puedes editar:</div>
+      <div class="fr c2">
+        <div class="fg"><label style="color:#a5b4fc">Nombre</label><input type="text" id="vozRegNom" placeholder="Nombre del producto" style="background:#1e1b4b;color:#fff;border-color:#6366f1"></div>
+        <div class="fg"><label style="color:#a5b4fc">Precio ($)</label><input type="number" id="vozRegPre" placeholder="0.00" step="0.01" style="background:#1e1b4b;color:#fff;border-color:#6366f1"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label style="color:#a5b4fc">Categoría</label>
+          <select id="vozRegCat" style="background:#1e1b4b;color:#fff;border-color:#6366f1">
+            <option value="Otro">📦 Otro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="br">
+      <button class="btn" onclick="activarMicVozReg()" style="background:#6366f1;color:#fff;border-color:#6366f1;flex-shrink:0">🎙️ Hablar</button>
+      <button class="btn bgn" onclick="confirmarVozDatosOK()" style="flex:1;justify-content:center">✓ Confirmar y agregar</button>
+      <button class="btn bgh bsm" onclick="cerrarOv('ovVozRegistro')" style="color:#a5b4fc;border-color:#6366f1">✕</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="facturaCanvas" style="display:none"></canvas>
+<canvas id="fotoCanvas" style="display:none"></canvas>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script>
+// ─── ESTADO ───────────────────────────────────────────────────
+let camVOn=false,camIOn=false,camFOn=false,qVOn=false,qIOn=false;
+let sV=null,sI=null,sF=null;
+let carrito=[],ventaId=null,allProds=[],pvActual=null,pvCant=1;
+let fotoB64=null,cliActualId=null,cliActualWA='';
+let negocio={nombre:'Mi Negocio',ruc:'',telefono:'',direccion:'',pie_pagina:'Gracias por su compra',logo_texto:'🏪',whatsapp_admin:'',email_admin:''};
+let categorias=[];
+
+window.onload=async()=>{
+  mostrarSplash();
+  cargarTemaGuardado();await cargarCfg();await cargarCats();await cargarProds();renderTop();};
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const pages=['venta','registrar','ventas','clientes','inventario','reportes','config'];
+  document.querySelectorAll('.ni').forEach((el,i)=>el.classList.toggle('active',pages[i%7]===p));
+  if(p==='ventas')cargarVentas();
+  if(p==='clientes')cargarClis();
+  if(p==='inventario')cargarInv();
+  if(p==='reportes'){swRep('ventas');cargarRepV();}
+  if(p==='config')cargarCatCfg();
+}
+
+// ─── CATEGORÍAS ───────────────────────────────────────────────
+async function cargarCats(){
+  const r=await fetch('/api/categorias/');
+  const d=await r.json();
+  categorias=d.categorias;
+  renderCatGrid();renderCatSel();renderCatFiltro();
+}
+function renderCatGrid(){
+  const el=document.getElementById('catGrid');
+  if(!el)return;
+  el.innerHTML=categorias.map(c=>`<button class="cat-btn" onclick="elegirTipo('${c.nombre.replace(/'/g,"\\'")}')"><span class="cem">${c.emoji}</span>${c.nombre}</button>`).join('');
+}
+function renderCatSel(){
+  const el=document.getElementById('catSelGrid');
+  if(!el)return;
+  const actual=document.getElementById('fCat')?.value||'Otro';
+  el.innerHTML=categorias.map(c=>`<button type="button" class="cat-btn${c.nombre===actual?' sel':''}" onclick="selCat('${c.nombre.replace(/'/g,"\\'")}','${c.emoji}')"><span class="cem">${c.emoji}</span>${c.nombre}</button>`).join('');
+}
+function selCat(nombre,emoji){
+  document.getElementById('fCat').value=nombre;
+  document.querySelectorAll('#catSelGrid .cat-btn').forEach(b=>b.classList.remove('sel'));
+  event.currentTarget.classList.add('sel');
+}
+function renderCatFiltro(){
+  const sel=document.getElementById('invCat');
+  if(!sel)return;
+  sel.innerHTML='<option value="">Todas</option>'+categorias.map(c=>`<option value="${c.nombre}">${c.emoji} ${c.nombre}</option>`).join('');
+}
+function showMCat(){document.getElementById('nCatE').value='';document.getElementById('nCatN').value='';document.getElementById('ovCat').classList.add('open');}
+async function crearCatModal(){
+  const emoji=document.getElementById('nCatE').value||'📦';
+  const nombre=document.getElementById('nCatN').value.trim();
+  if(!nombre){toast('Ingresa un nombre');return;}
+  const r=await fetch('/api/categorias/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,emoji})});
+  const d=await r.json();
+  if(d.ok){toast('Categoría creada ✓');cerrarOv('ovCat');await cargarCats();cargarCatCfg();}
+}
+async function agregarCat(){
+  const emoji=document.getElementById('newCatEmoji').value||'📦';
+  const nombre=document.getElementById('newCatNom').value.trim();
+  if(!nombre){toast('Ingresa nombre de categoría');return;}
+  const r=await fetch('/api/categorias/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,emoji})});
+  const d=await r.json();
+  if(d.ok){toast('✓ Categoría agregada');document.getElementById('newCatNom').value='';document.getElementById('newCatEmoji').value='';await cargarCats();cargarCatCfg();}
+}
+async function cargarCatCfg(){
+  const el=document.getElementById('catListCfg');if(!el)return;
+  await cargarCats();
+  el.innerHTML=categorias.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:14px"><span>${c.emoji} ${c.nombre}</span><button class="btn bdn bsm" onclick="elimCat(${c.id})">✕</button></div>`).join('');
+}
+async function elimCat(id){
+  if(!confirm('¿Desactivar esta categoría?'))return;
+  await fetch(`/api/categorias/${id}/eliminar/`,{method:'POST'});
+  toast('Categoría eliminada');await cargarCats();cargarCatCfg();
+}
+
+// ─── CÁMARAS ──────────────────────────────────────────────────
+function initQuagga(videoEl,cb){
+  Quagga.init({
+    inputStream:{type:'LiveStream',target:videoEl,constraints:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}},
+    decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','upc_reader','code_39_reader','upc_e_reader']},
+    locate:true,numOfWorkers:0,frequency:10,
+  },err=>{
+    if(err){toast('Error escáner');return;}
+    Quagga.start();
+    Quagga.onDetected(data=>{
+      const c=data.codeResult.code;
+      if(!c||c.length<4)return;
+      Quagga.offDetected();try{Quagga.stop();}catch(e){}
+      cb(c);
+    });
+  });
+}
+
+async function startCam(videoId,streamRef,cbCode){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    const v=document.getElementById(videoId);
+    v.srcObject=st;await v.play();v.style.display='block';
+    return st;
+  }catch(e){toast('Error cámara: '+e.message);return null;}
+}
+function stopCam(st,videoId){
+  if(st)st.getTracks().forEach(t=>t.stop());
+  const v=document.getElementById(videoId);
+  if(v){v.style.display='none';v.srcObject=null;}
+}
+
+// CAM VENTA
+async function toggleCamV(){
+  if(camVOn){detCamV();return;}
+  sV=await startCam('vidV');
+  if(!sV)return;
+  document.getElementById('sphV').style.display='none';document.getElementById('saimV').style.display='flex';
+  document.getElementById('btnCapV').style.display='inline-flex';document.getElementById('btnCV').textContent='⏹ Detener';
+  camVOn=true;qVOn=true;
+  setTimeout(()=>initQuagga(document.getElementById('vidV'),c=>{detCamV();mostrarPv(c);toast('Código: '+c);}),800);
+}
+function detCamV(){
+  stopCam(sV,'vidV');sV=null;camVOn=false;qVOn=false;
+  document.getElementById('sphV').style.display='block';document.getElementById('saimV').style.display='none';
+  document.getElementById('btnCapV').style.display='none';document.getElementById('btnCV').textContent='📷 Activar cámara';
+  try{Quagga.stop();}catch(e){}
+}
+
+// CAM INVENTARIO
+async function toggleCamI(){
+  if(camIOn){detCamI();return;}
+  sI=await startCam('vidI');if(!sI)return;
+  document.getElementById('sphI').style.display='none';document.getElementById('saimI').style.display='flex';
+  document.getElementById('btnCapI').style.display='inline-flex';document.getElementById('btnCI').textContent='⏹ Detener';
+  camIOn=true;
+  setTimeout(()=>initQuagga(document.getElementById('vidI'),c=>{detCamI();document.getElementById('codI').value=c;cargarFP(c);toast('Código: '+c);}),800);
+}
+function detCamI(){
+  stopCam(sI,'vidI');sI=null;camIOn=false;
+  document.getElementById('sphI').style.display='block';document.getElementById('saimI').style.display='none';
+  document.getElementById('btnCapI').style.display='none';document.getElementById('btnCI').textContent='📷 Activar cámara';
+  try{Quagga.stop();}catch(e){}
+}
+
+// CAM FOTO
+async function toggleCamF(){
+  if(camFOn){detCamF();return;}
+  sF=await startCam('vidF');if(!sF)return;
+  document.getElementById('sphF').style.display='none';document.getElementById('btnCapF').style.display='inline-flex';
+  document.getElementById('btnCF').textContent='⏹ Cancelar';camFOn=true;
+}
+function detCamF(){
+  stopCam(sF,'vidF');sF=null;camFOn=false;
+  document.getElementById('sphF').style.display='block';document.getElementById('btnCapF').style.display='none';
+  document.getElementById('btnCF').textContent='📷 Tomar foto';
+}
+function capturarFoto(){
+  const v=document.getElementById('vidF');
+  const c=document.getElementById('fotoCanvas');
+  c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+  c.getContext('2d').drawImage(v,0,0);
+  // Comprimir a 400px ancho máximo para imagen liviana
+  const maxW=400,scale=Math.min(1,maxW/c.width);
+  const c2=document.createElement('canvas');c2.width=c.width*scale;c2.height=c.height*scale;
+  c2.getContext('2d').drawImage(c,0,0,c2.width,c2.height);
+  fotoB64=c2.toDataURL('image/jpeg',0.65);
+  document.getElementById('fotoPrev').src=fotoB64;document.getElementById('fotoPrev').style.display='block';
+  document.getElementById('btnQF').style.display='inline-flex';detCamF();toast('Foto capturada ✓');
+}
+function quitarFoto(){fotoB64=null;document.getElementById('fotoPrev').style.display='none';document.getElementById('btnQF').style.display='none';}
+
+// ─── TABS REGISTRAR ───────────────────────────────────────────
+function swReg(t){
+  ['tabScan','tabManual','tabTipo'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';
+  document.querySelectorAll('.tabs .tab').forEach((b,i)=>b.classList.toggle('active',['scan','manual','tipo'][i]===t));
+  if(t==='tipo')renderCatGrid();
+}
+function onCodI(v){if(v.length>=8)setTimeout(()=>{if(document.getElementById('codI').value===v)buscarCodI();},600);}
+function buscarCodI(){const c=document.getElementById('codI').value.trim();if(!c){toast('Ingresa código');return;}cargarFP(c);}
+function usarCodMan(){const c=document.getElementById('codMan').value.trim();if(!c){toast('Ingresa código o nombre');return;}cargarFP(c);}
+function elegirTipo(cat){
+  const cod='CAT-'+Date.now();
+  cargarFP(cod,cat);
+}
+
+// ─── FORM PRODUCTO ────────────────────────────────────────────
+async function cargarFP(codigo,catDefault=null){
+  document.getElementById('fCod').value=codigo;document.getElementById('fId').value='';
+  document.getElementById('formP').style.display='block';
+  document.getElementById('formTit').textContent='📦 Nuevo producto';
+  ['fNom','fPrecio','fStock','fProv','fUbic','fNotas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fCat').value=catDefault||'Otro';
+  document.getElementById('fUnidad').value='unidad';
+  fotoB64=null;document.getElementById('fotoPrev').style.display='none';document.getElementById('btnQF').style.display='none';
+  renderCatSel();
+  try{
+    const r=await fetch(`/api/buscar/${encodeURIComponent(codigo)}/`);
+    const d=await r.json();
+    if(d.encontrado){
+      document.getElementById('fId').value=d.id;document.getElementById('fNom').value=d.nombre;
+      document.getElementById('fCat').value=d.categoria;document.getElementById('fPrecio').value=d.precio;
+      document.getElementById('fStock').value=d.stock;document.getElementById('fUnidad').value=d.unidad;
+      document.getElementById('fProv').value=d.proveedor||'';document.getElementById('fUbic').value=d.ubicacion||'';
+      document.getElementById('fNotas').value=d.notas||'';
+      if(d.imagen){document.getElementById('fotoPrev').src=d.imagen;document.getElementById('fotoPrev').style.display='block';}
+      document.getElementById('formTit').textContent='✏️ Editar producto';
+      toast('Producto encontrado — puedes editar');
+    }
+  }catch(e){}
+  renderCatSel();
+  document.getElementById('fNom').focus();
+  document.getElementById('formP').scrollIntoView({behavior:'smooth'});
+}
+async function guardarProd(){
+  const codigo=document.getElementById('fCod').value.trim();
+  const nombre=document.getElementById('fNom').value.trim();
+  if(!codigo||!nombre){toast('⚠️ Código y nombre son obligatorios');return;}
+  const body={codigo_barras:codigo,nombre,categoria:document.getElementById('fCat').value,
+    precio:document.getElementById('fPrecio').value||0,stock:document.getElementById('fStock').value||0,
+    unidad:document.getElementById('fUnidad').value,proveedor:document.getElementById('fProv').value,
+    ubicacion:document.getElementById('fUbic').value,notas:document.getElementById('fNotas').value};
+  const r=await fetch('/api/productos/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.ok){
+    toast(d.mensaje+' ✓');
+    if(fotoB64&&d.id){
+      try{await fetch(`/api/productos/${d.id}/foto/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({foto:fotoB64})});}catch(e){}
+    }
+    limpiarF();allProds=[];setTimeout(renderTop,400);
+  }else toast(d.error||'Error');
+}
+function limpiarF(){document.getElementById('formP').style.display='none';document.getElementById('codI').value='';document.getElementById('codMan').value='';fotoB64=null;}
+
+// ─── PRODUCTOS / CARRITO ──────────────────────────────────────
+async function cargarProds(){
+  const r=await fetch('/api/productos/');const d=await r.json();allProds=d.productos;
+}
+async function renderTop(){
+  const r=await fetch('/api/mas-vendidos/');const d=await r.json();
+  const el=document.getElementById('topP');if(!el)return;
+  if(!d.productos.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--mt);padding:14px;font-size:13px">Registra productos primero</div>';return;}
+  el.innerHTML=d.productos.map(p=>{
+    const ss=p.stock<=0;
+    const img=p.imagen?`<img src="${p.imagen}" alt="${p.nombre}" style="width:50px;height:50px;object-fit:cover;border-radius:7px;margin-bottom:5px">`:`<div class="pio">${getCatEmoji(p.categoria)}</div>`;
+    return `<div class="pcard${ss?' ss':''}" onclick="addTop(${p.id},'${p.nombre.replace(/'/g,"\\'")}',${p.precio},${p.stock})">${img}<div class="pnom">${p.nombre.length>20?p.nombre.substring(0,19)+'…':p.nombre}</div><div class="ppre">$${p.precio.toFixed(2)}</div><div class="pstk">${ss?'Sin stock':p.stock+' uds'}</div></div>`;
+  }).join('');
+}
+
+function getCatEmoji(cat){
+  const c=categorias.find(x=>x.nombre.toLowerCase().includes((cat||'').toLowerCase()));
+  return c?c.emoji:'📦';
+}
+
+function addTop(id,nombre,precio,stock){if(stock<=0){hablar('Sin stock disponible para '+nombre);toast('Sin stock');return;}addCarrito(id,nombre,precio,stock,1);hablar(nombre+' agregado al carrito.');toast(nombre+' agregado ✓');}
+
+async function mostrarPv(codigo){
+  const r=await fetch(`/api/buscar/${encodeURIComponent(codigo)}/`);
+  const d=await r.json();
+  if(d.encontrado){
+    pvActual=d;pvCant=1;
+    document.getElementById('pvNom').textContent=d.nombre;
+    document.getElementById('pvMeta').textContent=`Stock: ${d.stock} ${d.unidad} · ${getCatEmoji(d.categoria)} ${d.categoria}`;
+    document.getElementById('pvPre').textContent='$'+d.precio.toFixed(2);
+    document.getElementById('pvCant').textContent='1';
+    document.getElementById('prodPrev').style.display='block';
+    document.getElementById('prodPrev').scrollIntoView({behavior:'smooth'});
+  }else toast('Producto no en inventario — ve a Registrar Producto');
+}
+function chPv(d){if(!pvActual)return;pvCant=Math.max(1,Math.min(pvActual.stock,pvCant+d));document.getElementById('pvCant').textContent=pvCant;}
+function addPvCarrito(){if(!pvActual)return;addCarrito(pvActual.id,pvActual.nombre,pvActual.precio,pvActual.stock,pvCant);document.getElementById('prodPrev').style.display='none';pvActual=null;pvCant=1;toast('Agregado ✓');}
+
+function buscarPV(q){
+  if(q.length<1){
+    // Show all products when empty, sorted by name
+    if(allProds.length){
+      const el=document.getElementById('pvRes');
+      el.style.display='block';
+      el.innerHTML=allProds.slice(0,15).map(p=>`<div onclick="selPV(${p.id},'${p.nombre.replace(/'/g,"\\'")}',${p.precio},${p.stock})" style="padding:11px 13px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${getCatEmoji(p.categoria)} ${p.nombre}<br><span style="font-size:11px;color:var(--mt);font-weight:400">Stock: ${p.stock}</span><span style="color:var(--ac);font-weight:700;flex-shrink:0;margin-left:10px">$${p.precio.toFixed(2)}</span></div>`).join('');
+    }
+    return;
+  }
+  if(!allProds.length){cargarProds().then(()=>buscarPV(q));return;}
+  const ql=q.toLowerCase();
+  const items=allProds.filter(p=>p.nombre.toLowerCase().includes(ql)||p.codigo_barras.includes(q)||p.categoria.toLowerCase().includes(ql));
+  const el=document.getElementById('pvRes');
+  if(!items.length){
+    el.style.display='block';
+    el.innerHTML=`<div style="padding:14px;text-align:center;font-size:13px;color:var(--mt)">Sin resultados para "${q}" — <button class="btn bsm" style="background:var(--am);color:#fff;border-color:var(--am)" onclick="irRegistrar()">Registrar este producto</button></div>`;
+    return;
+  }
+  el.style.display='block';
+  el.innerHTML=items.slice(0,12).map(p=>`<div onclick="selPV(${p.id},'${p.nombre.replace(/'/g,"\\'")}',${p.precio},${p.stock})" style="padding:11px 13px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${getCatEmoji(p.categoria)} ${p.nombre}<br><span style="font-size:11px;color:var(--mt);font-weight:400">Stock: ${p.stock} · ${p.categoria}</span><span style="color:var(--ac);font-weight:700;flex-shrink:0;margin-left:10px">$${p.precio.toFixed(2)}</span></div>`).join('');
+}
+function buscarPVManual(){
+  const q=document.getElementById('vPB').value.trim();
+  if(!q){
+    // show all
+    if(!allProds.length){cargarProds().then(()=>buscarPVManual());return;}
+    buscarPV('');
+    return;
+  }
+  buscarPV(q);
+}
+function irRegistrar(){showPage('registrar');toast('Registra el producto y regresa a Nueva Venta');}
+function selPV(id,nombre,precio,stock){
+  document.getElementById('pvRes').style.display='none';document.getElementById('vPB').value='';
+  pvActual={id,nombre,precio,stock,unidad:'unidad',categoria:'otro'};pvCant=1;
+  document.getElementById('pvNom').textContent=nombre;document.getElementById('pvMeta').textContent='Stock: '+stock;
+  document.getElementById('pvPre').textContent='$'+precio.toFixed(2);document.getElementById('pvCant').textContent='1';
+  document.getElementById('prodPrev').style.display='block';
+}
+
+function addCarrito(id,nombre,precio,stock,cant=1){
+  if(stock<=0){hablar('Sin stock disponible para '+nombre);toast('Sin stock para: '+nombre);return;}
+  const ex=carrito.find(i=>i.id===id);
+  if(ex){
+    const nuevo=Math.min(ex.cantidad+cant,stock);
+    if(nuevo===ex.cantidad) hablar('Ya alcanzaste el máximo de stock disponible para '+nombre);
+    ex.cantidad=nuevo;
+  } else carrito.push({id,nombre,precio,cantidad:Math.min(cant,stock),stock});
+  renderCarrito();
+}
+function renderCarrito(){
+  const el=document.getElementById('carritoEl');
+  if(!carrito.length){el.innerHTML='<div style="text-align:center;color:var(--mt);font-size:13px;padding:14px">Sin productos</div>';calcT();return;}
+  el.innerHTML=carrito.map((it,i)=>`<div class="irow"><div class="inm">${getCatEmoji(it.categoria||'otro')} ${it.nombre}</div><div class="qrow"><button class="qbtn" onclick="chC(${i},-1)">−</button><span style="font-size:15px;font-weight:700;min-width:22px;text-align:center">${it.cantidad}</span><button class="qbtn" onclick="chC(${i},1)">+</button></div><div class="ipr">$${(it.precio*it.cantidad).toFixed(2)}</div><button onclick="qIt(${i})" style="border:none;background:none;cursor:pointer;color:var(--rd);font-size:20px;font-weight:700;padding:0 3px">×</button></div>`).join('');
+  calcT();
+}
+function chC(i,d){carrito[i].cantidad=Math.max(1,Math.min(carrito[i].stock,carrito[i].cantidad+d));renderCarrito();}
+function qIt(i){carrito.splice(i,1);renderCarrito();}
+function calcT(){
+  const sub=carrito.reduce((a,i)=>a+i.precio*i.cantidad,0);
+  const desc=parseFloat(document.getElementById('vDesc').value)||0;
+  const tot=Math.max(0,sub-desc);
+  document.getElementById('vSub').textContent='$'+sub.toFixed(2);
+  document.getElementById('vTot').textContent='$'+tot.toFixed(2);
+  calcCuota();
+}
+function togCred(){document.getElementById('credOpts').style.display=document.getElementById('vTP').value==='credito'?'block':'none';}
+function calcCuota(){
+  const tot=parseFloat(document.getElementById('vTot').textContent.replace('$',''))||0;
+  const cu=parseInt(document.getElementById('vCuotas').value)||1;
+  const pl=parseInt(document.getElementById('vPlazo').value)||0;
+  if(document.getElementById('vTP').value==='credito'&&tot>0)
+    document.getElementById('vCuotaI').textContent=`Cuota: $${(tot/cu).toFixed(2)} · c/${pl>0?Math.round(pl/cu)+' días':'—'}`;
+}
+
+// ─── CONFIRMAR VENTA ──────────────────────────────────────────
+async function confirmarVenta(){
+  const cliId=document.getElementById('vCId').value;
+
+  // Validación 1 — sin cliente
+  if(!cliId){
+    hablar('Falta registrar el cliente. Por favor busca o crea un cliente antes de confirmar la venta.');
+    toast('⚠️ Falta el cliente');
+    // Highlight cliente section
+    const cliCard=document.getElementById('vCB');
+    if(cliCard){cliCard.focus();cliCard.scrollIntoView({behavior:'smooth',block:'center'});}
+    // Offer to search by voice
+    setTimeout(()=>{
+      if(confirm('¿Quieres buscar el cliente por voz?')) activarMicCliente();
+    },2500);
+    return;
+  }
+
+  // Validación 2 — carrito vacío
+  if(!carrito.length){
+    hablar('El carrito está vacío. Agrega al menos un producto antes de confirmar.');
+    toast('⚠️ Agrega productos al carrito');
+    return;
+  }
+
+  // Validación 3 — total cero
+  const tot=parseFloat(document.getElementById('vTot').textContent.replace('$',''));
+  if(tot<=0){
+    hablar('El total de la venta es cero. Verifica los precios de los productos.');
+    toast('⚠️ El total debe ser mayor a 0');
+    return;
+  }
+
+  // Confirmación por voz antes de procesar
+  const clienteNom=document.getElementById('vCNom').textContent;
+  const numProds=carrito.length;
+  hablar('Confirmando venta para '+clienteNom+'. '+numProds+' producto'+( numProds>1?'s':'')+'. Total: '+tot.toFixed(2)+' dólares. Procesando...');
+
+  const body={
+    cliente_id:parseInt(cliId),
+    items:carrito.map(i=>({producto_id:i.id,cantidad:i.cantidad,precio:i.precio})),
+    tipo_pago:document.getElementById('vTP').value,
+    metodo_pago:document.getElementById('vMet').value,
+    descuento:parseFloat(document.getElementById('vDesc').value)||0,
+    plazo_dias:parseInt(document.getElementById('vPlazo').value)||0,
+    cuotas:parseInt(document.getElementById('vCuotas').value)||1,
+    notas:document.getElementById('vNot').value
+  };
+
+  try{
+    const r=await fetch('/api/ventas/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.ok){
+      hablar('Venta registrada exitosamente. Factura número '+d.numero+'. Total '+tot.toFixed(2)+' dólares.');
+      toast('✓ Venta '+d.numero+' registrada');
+      const envWA=document.getElementById('enviarWA').checked;
+      carrito=[];renderCarrito();
+      document.getElementById('vCId').value='';
+      document.getElementById('cliSel').style.display='none';
+      document.getElementById('vDesc').value='0';
+      document.getElementById('vNot').value='';
+      allProds=[];
+      await verVenta(d.venta_id);
+      if(envWA&&d.cliente_whatsapp){
+        setTimeout(()=>enviarWALinkAuto(d.cliente_whatsapp,d.numero,tot),1800);
+      }
+      setTimeout(renderTop,600);
+    }else{
+      hablar('Error al registrar la venta. '+( d.error||'Intenta de nuevo.'));
+      toast(d.error||'Error al registrar');
+    }
+  }catch(e){
+    hablar('Error de conexión con el servidor.');
+    toast('Error de conexión');
+  }
+}
+
+// Búsqueda de cliente por voz
+let recCli=null;
+function activarMicCliente(){
+  if(!SR){toast('Voz no disponible');return;}
+  hablar('Di el nombre o cédula del cliente.');
+  const estado=document.getElementById('vozEstado');
+
+  recCli=new SR();
+  recCli.lang='es-EC';
+  recCli.continuous=false;
+  recCli.interimResults=false;
+
+  recCli.onresult=e=>{
+    const txt=e.results[0][0].transcript.trim();
+    hablar('Buscando cliente: '+txt);
+    document.getElementById('vCB').value=txt;
+    buscarCli(txt);
+    toast('Buscando cliente: '+txt);
+  };
+  recCli.onerror=e=>hablar('Error de micrófono. Intenta de nuevo.');
+  recCli.start();
+}
+
+
+async function verVenta(id){
+  ventaId=id;
+  const r=await fetch(`/api/ventas/${id}/`);
+  const v=await r.json();
+  window._venta=v;
+  const eb=v.estado==='pagada'?'bg2':v.estado==='credito'?'ba':'br2';
+  document.getElementById('ovVTit').textContent=`🧾 Factura ${v.numero}`;
+  document.getElementById('btnPago').style.display=v.saldo>0?'inline-flex':'none';
+  document.getElementById('pagoS').textContent='$'+v.saldo.toFixed(2);
+  const tieneWA=v.cliente.whatsapp;
+  document.getElementById('btnWALink').style.display=tieneWA?'inline-flex':'none';
+  document.getElementById('btnWAAPI').style.display=tieneWA?'inline-flex':'none';
+  document.getElementById('ovVBody').innerHTML=`
+    <div class="dg">
+      <div class="di"><div class="lbl">Cliente</div><div class="val">${v.cliente.nombre}</div></div>
+      <div class="di"><div class="lbl">Cédula</div><div class="val">${v.cliente.cedula}</div></div>
+      <div class="di"><div class="lbl">Tipo pago</div><div class="val">${v.tipo_pago}</div></div>
+      <div class="di"><div class="lbl">Estado</div><div class="val"><span class="badge ${eb}">${v.estado}</span></div></div>
+      <div class="di"><div class="lbl">Total</div><div class="val" style="color:var(--ac);font-size:17px">$${v.total.toFixed(2)}</div></div>
+      <div class="di"><div class="lbl">Saldo</div><div class="val" style="color:${v.saldo>0?'var(--rd)':'var(--gn)'}">$${v.saldo.toFixed(2)}</div></div>
+      ${v.cuotas>1?`<div class="di"><div class="lbl">Cuotas</div><div class="val">${v.cuotas} × $${v.cuota_monto}</div></div>`:''}
+      ${v.fecha_vencimiento?`<div class="di"><div class="lbl">Vencimiento</div><div class="val">${v.fecha_vencimiento}</div></div>`:''}
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:7px">Productos</div>
+    <table style="font-size:12px;margin-bottom:12px"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Sub</th></tr></thead><tbody>
+    ${v.detalles.map(d=>`<tr><td>${d.imagen?`<img src="${d.imagen}" style="width:28px;height:28px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:5px">`:''}${d.producto}</td><td>${d.cantidad}</td><td>$${d.precio_unitario.toFixed(2)}</td><td style="font-weight:700">$${d.subtotal.toFixed(2)}</td></tr>`).join('')}
+    </tbody></table>
+    ${v.descuento>0?`<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mt);margin-bottom:3px"><span>Descuento</span><span>-$${v.descuento.toFixed(2)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;margin-bottom:12px;padding-top:7px;border-top:2px solid var(--bd)"><span>TOTAL</span><span style="color:var(--ac)">$${v.total.toFixed(2)}</span></div>
+    ${v.pagos.length?`<div style="font-size:12px;font-weight:600;margin-bottom:5px">Pagos</div>${v.pagos.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--bd)"><span>${p.metodo} — ${p.fecha}</span><span style="color:var(--gn);font-weight:700">+$${p.monto.toFixed(2)}</span></div>`).join('')}`:''}
+    ${v.notas?`<div style="margin-top:8px;font-size:12px;color:var(--mt);background:var(--bg);padding:8px;border-radius:var(--rs)">${v.notas}</div>`:''}
+    ${tieneWA?'<div style="margin-top:10px;font-size:12px;color:#0a5c1e;background:#e7fde9;border:1px solid #25D366;padding:8px 12px;border-radius:var(--rs)">📲 WhatsApp disponible: '+v.cliente.whatsapp+'</div>':''}
+  `;
+  document.getElementById('ovVenta').classList.add('open');
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────────────
+function construirMensajeWA(v){
+  const lineas=v.detalles.map(d=>`  • ${d.producto} x${d.cantidad} = $${d.subtotal.toFixed(2)}`).join('\n');
+  return encodeURIComponent(`*${negocio.nombre}*\n*Factura ${v.numero}*\n\nCliente: ${v.cliente.nombre}\nFecha: ${v.fecha}\n\n*Productos:*\n${lineas}\n\n*Total: $${v.total.toFixed(2)}*\n${v.saldo>0?`Saldo pendiente: $${v.saldo.toFixed(2)}`:'✓ PAGADO COMPLETAMENTE'}\n\n${negocio.pie_pagina}`);
+}
+
+function generarJPGBlob(v, callback){
+  const W=600;
+  const H=Math.max(460,340+v.detalles.length*28+v.pagos.length*20+(v.notas?36:0)+60);
+  const cv=document.getElementById('facturaCanvas');cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  let y=0;
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,88);ctx.fillStyle='#fff';ctx.textAlign='center';
+  ctx.font='bold 20px sans-serif';ctx.fillText((negocio.logo_texto||'📦')+' '+negocio.nombre,W/2,30);
+  ctx.font='11px sans-serif';if(negocio.ruc)ctx.fillText('RUC: '+negocio.ruc,W/2,48);
+  ctx.fillText([negocio.telefono,negocio.direccion].filter(Boolean).join(' · '),W/2,negocio.ruc?65:52);y=88;
+  const sc=v.estado==='pagada'?'#0f7a43':v.estado==='credito'?'#9c5f00':'#c0282a';
+  ctx.fillStyle=sc;ctx.fillRect(0,y,W,30);ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('FACTURA '+v.numero+' · '+v.estado.toUpperCase()+' · '+v.fecha,W/2,y+20);y+=30;
+  y+=8;ctx.fillStyle='#f0efe9';ctx.fillRect(14,y,W-28,56);ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(14,y,W-28,56);
+  ctx.fillStyle='#666';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText('CLIENTE',26,y+14);
+  ctx.fillStyle='#111';ctx.font='bold 13px sans-serif';ctx.fillText(v.cliente.nombre,26,y+30);
+  ctx.fillStyle='#666';ctx.font='11px sans-serif';ctx.fillText('Cédula: '+v.cliente.cedula+(v.cliente.telefono?' · Tel: '+v.cliente.telefono:''),26,y+47);y+=64;
+  ctx.fillStyle='#111';ctx.fillRect(14,y,W-28,26);ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.textAlign='left';ctx.fillText('PRODUCTO',26,y+18);
+  ctx.textAlign='right';ctx.fillText('CANT',282,y+18);ctx.fillText('P.UNIT',372,y+18);ctx.fillText('SUBTOTAL',W-26,y+18);y+=26;
+  v.detalles.forEach((d,i)=>{ctx.fillStyle=i%2===0?'#fff':'#fafaf8';ctx.fillRect(14,y,W-28,26);ctx.strokeStyle='#eee';ctx.lineWidth=.5;ctx.strokeRect(14,y,W-28,26);ctx.fillStyle='#111';ctx.font='11px sans-serif';ctx.textAlign='left';const nm=d.producto.length>32?d.producto.substring(0,31)+'…':d.producto;ctx.fillText(nm,26,y+18);ctx.textAlign='right';ctx.fillText(d.cantidad,282,y+18);ctx.fillText('$'+d.precio_unitario.toFixed(2),372,y+18);ctx.fillStyle='#1a5cff';ctx.font='bold 11px sans-serif';ctx.fillText('$'+d.subtotal.toFixed(2),W-26,y+18);y+=26;});
+  y+=6;if(v.descuento>0){ctx.fillStyle='#666';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText('Descuento: -$'+v.descuento.toFixed(2),W-26,y+13);y+=20;}
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,y);ctx.lineTo(W-14,y);ctx.stroke();y+=7;
+  ctx.fillStyle='#111';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.fillText('TOTAL:',370,y+19);ctx.fillStyle='#1a5cff';ctx.font='bold 18px sans-serif';ctx.fillText('$'+v.total.toFixed(2),W-26,y+19);y+=28;
+  if(v.saldo>0){ctx.fillStyle='#fde8e8';ctx.fillRect(14,y,W-28,26);ctx.strokeStyle='#c0282a';ctx.lineWidth=1;ctx.strokeRect(14,y,W-28,26);ctx.fillStyle='#c0282a';ctx.font='bold 12px sans-serif';ctx.textAlign='left';ctx.fillText('SALDO PENDIENTE: $'+v.saldo.toFixed(2),26,y+18);y+=32;}
+  y=H-34;ctx.strokeStyle='#eee';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,y);ctx.lineTo(W-14,y);ctx.stroke();ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(negocio.pie_pagina||'Gracias por su compra',W/2,y+13);ctx.fillStyle='#aaa';ctx.font='9px sans-serif';ctx.fillText('InventarioNube',W/2,y+26);
+  cv.toBlob(blob=>callback(blob),'image/jpeg',0.82);
+}
+
+function enviarWALink(){
+  const v=window._venta;if(!v||!v.cliente.whatsapp){toast('Cliente sin WhatsApp registrado');return;}
+  toast('Generando factura JPG...');
+  generarJPGBlob(v, blob=>{
+    // 1. Download JPG
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='factura_'+v.numero+'.jpg';a.click();
+    URL.revokeObjectURL(url);
+    // 2. Open WhatsApp with text after short delay
+    setTimeout(()=>{
+      const num=v.cliente.whatsapp.replace(/\D/g,'');
+      const msg=construirMensajeWA(v);
+      window.open('https://wa.me/'+num+'?text='+msg,'_blank');
+      toast('📲 JPG descargada — adjúntala en WhatsApp con el clip 📎');
+    },800);
+  });
+}
+
+function enviarWALinkAuto(waNum,numero,total){
+  const v=window._venta;
+  const num=waNum.replace(/\D/g,'');
+  // Download JPG first
+  if(v){
+    generarJPGBlob(v,blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='factura_'+numero+'.jpg';a.click();
+      URL.revokeObjectURL(url);
+      setTimeout(()=>{
+        const msg=encodeURIComponent('*'+negocio.nombre+'*\nFactura *'+numero+'* por $'+parseFloat(total).toFixed(2)+'\n\n'+negocio.pie_pagina+'\n\n_La foto de la factura fue descargada en tu galería. Adjúntala con el clip 📎_');
+        window.open('https://wa.me/'+num+'?text='+msg,'_blank');
+        toast('📲 JPG descargada + WhatsApp abierto. Adjunta la foto con 📎');
+      },900);
+    });
+  } else {
+    const msg=encodeURIComponent('*'+negocio.nombre+'*\nFactura *'+numero+'* por $'+parseFloat(total).toFixed(2)+'\n\n'+negocio.pie_pagina);
+    window.open('https://wa.me/'+num+'?text='+msg,'_blank');
+  }
+}
+
+function enviarWAAPI(){
+  const v=window._venta;if(!v||!v.cliente.whatsapp){toast('Cliente sin WhatsApp');return;}
+  // Instrucciones para WhatsApp Business API
+  const num=v.cliente.whatsapp.replace(/\D/g,'');
+  const msg=construirMensajeWA(v);
+  const info=`Para usar WhatsApp Business API necesitas:\n1. Cuenta en business.facebook.com\n2. Número aprobado por Meta\n3. Proveedor: Twilio o 360dialog\n\nPor ahora se abrirá WhatsApp Web:`;
+  if(confirm(info)){window.open(`https://web.whatsapp.com/send?phone=${num}&text=${msg}`,'_blank');}
+}
+
+function enviarReporteWA(){
+  const waAdmin=negocio.whatsapp_admin;
+  if(!waAdmin){toast('Configura el WhatsApp del administrador en ⚙️ Configuración');return;}
+  const num=waAdmin.replace(/\D/g,'');
+  const rows=document.querySelectorAll('#tbRV tr');
+  let txt=`*${negocio.nombre} — Reporte de ventas*\n\n`;
+  rows.forEach(r=>{const tds=r.querySelectorAll('td');if(tds.length>=4)txt+=`${tds[0]?.textContent||''} | ${tds[1]?.textContent||''} | ${tds[2]?.textContent||''} | ${tds[3]?.textContent||''}\n`;});
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(txt)}`,'_blank');
+}
+
+function enviarInvWA(){
+  const waAdmin=negocio.whatsapp_admin;
+  if(!waAdmin){toast('Configura WhatsApp admin en ⚙️ Configuración');return;}
+  const num=waAdmin.replace(/\D/g,'');
+  let txt=`*${negocio.nombre} — Inventario*\n\n`;
+  document.querySelectorAll('#tbInv tr').forEach(r=>{const tds=r.querySelectorAll('td');if(tds.length>=4)txt+=`${tds[1]?.textContent||''} | ${tds[2]?.textContent||''} | Stock: ${tds[4]?.textContent||''}\n`;});
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(txt)}`,'_blank');
+}
+
+function enviarWACli(){
+  const v=window._cliDetActual;
+  if(!v||!v.whatsapp){toast('Cliente sin WhatsApp registrado');return;}
+  const num=v.whatsapp.replace(/\D/g,'');
+  const saldo=v.saldo_pendiente>0?`\nSaldo pendiente: *$${v.saldo_pendiente.toFixed(2)}*`:'';
+  const msg=encodeURIComponent(`Hola *${v.nombre}*, le contactamos de *${negocio.nombre}*${saldo}\n\n${negocio.pie_pagina}`);
+  window.open(`https://wa.me/${num}?text=${msg}`,'_blank');
+}
+
+function enviarHistorialWA(){
+  const wa=document.getElementById('btnWAHistorial').dataset.wa||'';
+  if(!wa){toast('Sin WhatsApp del cliente');return;}
+  const num=wa.replace(/\D/g,'');
+  const stats=document.getElementById('histStats');
+  const msg=encodeURIComponent(`*${negocio.nombre} — Historial de consumos*\n\n${stats.innerText}\n\n${negocio.pie_pagina}`);
+  window.open(`https://wa.me/${num}?text=${msg}`,'_blank');
+}
+
+// ─── DESCARGAR JPG ────────────────────────────────────────────
+function descargarJPG(){
+  const v=window._venta;if(!v){toast('Sin datos de factura');return;}
+  toast('Generando imagen...');
+  generarJPGBlob(v, blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='factura_'+v.numero+'.jpg';a.click();
+    URL.revokeObjectURL(url);
+    toast('✓ Factura JPG descargada');
+  });
+}
+
+// ─── VENTAS LIST ──────────────────────────────────────────────
+async function cargarVentas(){
+  const q=(document.getElementById('vSearch')||{value:''}).value;
+  const est=(document.getElementById('vEstado')||{value:''}).value;
+  const des=(document.getElementById('vDesde')||{value:''}).value;
+  const has=(document.getElementById('vHasta')||{value:''}).value;
+  const r=await fetch(`/api/ventas/?q=${encodeURIComponent(q)}&estado=${est}&desde=${des}&hasta=${has}`);
+  const d=await r.json();const tb=document.getElementById('tbV');if(!tb)return;
+  if(!d.ventas.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ei">🧾</div><p>Sin ventas</p></div></td></tr>`;return;}
+  const eb=s=>s==='pagada'?'bg2':s==='credito'?'ba':'br2';
+  tb.innerHTML=d.ventas.map(v=>`<tr onclick="verVenta(${v.id})"><td style="font-size:11px">${v.numero}</td><td><strong>${v.cliente_nombre}</strong><br><span style="font-size:11px;color:var(--mt)">${v.cliente_cedula}</span></td><td style="font-weight:700">$${v.total.toFixed(2)}</td><td style="font-weight:700;color:${v.saldo>0?'var(--rd)':'var(--gn)'}">$${v.saldo.toFixed(2)}</td><td><span class="badge ${eb(v.estado)}">${v.estado}</span></td><td style="font-size:11px;color:var(--mt)">${v.fecha}</td><td>${v.cliente_whatsapp?`<button onclick="event.stopPropagation();abrirWA('${v.cliente_whatsapp.replace(/'/g,"\\'")}','${v.numero}',${v.total})" style="border:none;background:#25D366;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:700">📲</button>`:'—'}</td></tr>`).join('');
+}
+function abrirWA(wa,num,tot){const n=wa.replace(/\D/g,'');window.open(`https://wa.me/${n}?text=${encodeURIComponent(`*${negocio.nombre}*\nFactura ${num} · $${parseFloat(tot).toFixed(2)}`)}`, '_blank');}
+function limpFiltrosV(){['vSearch','vDesde','vHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('vEstado').value='';cargarVentas();}
+
+// ─── CLIENTES ────────────────────────────────────────────────
+function buscarCli(q){
+  if(q.length<2){document.getElementById('cliRes').style.display='none';return;}
+  fetch(`/api/clientes/?q=${encodeURIComponent(q)}`).then(r=>r.json()).then(d=>{
+    const el=document.getElementById('cliRes');
+    if(!d.clientes.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML=d.clientes.map(c=>`<div onclick="selCli(${c.id},'${c.nombre.replace(/'/g,"\\'")}','${c.cedula}','${c.telefono||''}','${c.whatsapp||''}')" style="padding:11px 13px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${c.nombre} <span style="color:var(--mt);font-size:11px;font-weight:400">— ${c.cedula}</span>${c.saldo_pendiente>0?` <span class="badge br2" style="font-size:10px">Debe $${c.saldo_pendiente.toFixed(2)}</span>`:''}</div>`).join('');
+  });
+}
+function selCli(id,nombre,cedula,tel,wa){
+  document.getElementById('vCId').value=id;document.getElementById('vCNom').textContent=nombre;
+  document.getElementById('vCInf').textContent=`Cédula: ${cedula}${tel?' · Tel: '+tel:''}${wa?' · 📲 '+wa:''}`;
+  document.getElementById('cliSel').style.display='block';document.getElementById('cliRes').style.display='none';document.getElementById('vCB').value='';
+  hablar('Cliente seleccionado: '+nombre);
+}
+function limpCli(){document.getElementById('vCId').value='';document.getElementById('cliSel').style.display='none';}
+
+async function cargarClis(){
+  const q=(document.getElementById('cliSearch')||{value:''}).value;
+  const r=await fetch(`/api/clientes/?q=${encodeURIComponent(q)}`);
+  const d=await r.json();const tb=document.getElementById('tbCli');if(!tb)return;
+  if(!d.clientes.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="ei">👥</div><p>Sin clientes</p></div></td></tr>`;return;}
+  tb.innerHTML=d.clientes.map(c=>`<tr onclick="verCli(${c.id})"><td><strong>${c.nombre}</strong></td><td style="font-size:12px">${c.cedula}</td><td>${c.telefono||'—'}</td><td>${c.whatsapp?`<span style="color:#0a5c1e;font-weight:600;font-size:12px">📲</span> ${c.whatsapp}`:'—'}</td><td>${c.total_ventas}</td><td style="font-weight:700;color:${c.saldo_pendiente>0?'var(--rd)':'var(--gn)'}">$${c.saldo_pendiente.toFixed(2)}</td></tr>`).join('');
+}
+function showMCli(){['cNom','cCed','cTel','cWA','cDir'].forEach(id=>document.getElementById(id).value='');document.getElementById('ovCli').classList.add('open');}
+async function guardarCli(){
+  const nombre=document.getElementById('cNom').value.trim();
+  const cedula=document.getElementById('cCed').value.trim();
+  if(!nombre||!cedula){toast('⚠️ Nombre y cédula obligatorios');return;}
+  const r=await fetch('/api/clientes/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,cedula,telefono:document.getElementById('cTel').value,whatsapp:document.getElementById('cWA').value,direccion:document.getElementById('cDir').value})});
+  const d=await r.json();
+  if(d.ok){toast(d.created?'Cliente creado ✓':'Actualizado ✓');cerrarOv('ovCli');cargarClis();selCli(d.id,d.nombre,d.cedula,d.telefono||'',d.whatsapp||'');}
+  else toast(d.error||'Error');
+}
+
+async function verCli(id){
+  const r=await fetch(`/api/clientes/${id}/`);const c=await r.json();
+  window._cliDetActual=c;cliActualId=id;cliActualWA=c.whatsapp||'';
+  document.getElementById('ovCDTit').textContent='👤 '+c.nombre;
+  document.getElementById('btnWACli').style.display=c.whatsapp?'inline-flex':'none';
+  document.getElementById('btnHistorial').dataset.id=id;
+  document.getElementById('ovCDBody').innerHTML=`
+    <div class="dg">
+      <div class="di"><div class="lbl">Cédula</div><div class="val">${c.cedula}</div></div>
+      <div class="di"><div class="lbl">Teléfono</div><div class="val">${c.telefono||'—'}</div></div>
+      <div class="di"><div class="lbl">WhatsApp</div><div class="val">${c.whatsapp||'—'}</div></div>
+      <div class="di"><div class="lbl">Saldo pendiente</div><div class="val" style="color:${c.saldo_pendiente>0?'var(--rd)':'var(--gn)'}">$${c.saldo_pendiente.toFixed(2)}</div></div>
+    </div>
+    ${c.direccion?`<div style="background:var(--bg);padding:9px;border-radius:var(--rs);font-size:12px;color:var(--mt);margin-bottom:10px">📍 ${c.direccion}</div>`:''}
+    <div style="font-size:13px;font-weight:600;margin-bottom:7px">Últimas compras</div>
+    ${c.ventas.slice(0,5).map(v=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px;cursor:pointer" onclick="cerrarOv('ovCliDet');verVenta(${v.id})"><span style="font-weight:500">${v.numero} — ${v.fecha}</span><span style="color:${v.saldo>0?'var(--rd)':'var(--gn)'};font-weight:700">$${v.total.toFixed(2)}</span></div>`).join('')||'<p style="font-size:12px;color:var(--mt)">Sin compras</p>'}
+  `;
+  document.getElementById('ovCliDet').classList.add('open');
+}
+
+// ─── HISTORIAL CLIENTE ────────────────────────────────────────
+async function verHistorial(){
+  const id=document.getElementById('btnHistorial').dataset.id||cliActualId;
+  if(!id)return;
+  document.getElementById('hDesde').value='';document.getElementById('hHasta').value='';document.getElementById('hEstado').value='';
+  await cargarHistorial(id);
+  document.getElementById('ovHistorial').classList.add('open');
+}
+async function filtrarHistorial(){
+  const id=document.getElementById('btnHistorial').dataset.id||cliActualId;
+  await cargarHistorial(id);
+}
+async function cargarHistorial(id){
+  const des=document.getElementById('hDesde').value;
+  const has=document.getElementById('hHasta').value;
+  const est=document.getElementById('hEstado').value;
+  const r=await fetch(`/api/clientes/${id}/historial/?desde=${des}&hasta=${has}&estado=${est}`);
+  const d=await r.json();
+  document.getElementById('ovHisTit').textContent=`📋 Historial — ${d.cliente.nombre}`;
+  document.getElementById('btnWAHistorial').dataset.wa=d.cliente.whatsapp||'';
+  const rs=d.resumen;
+  document.getElementById('histStats').innerHTML=`
+    <div class="stat"><div class="sv">$${rs.total_comprado.toFixed(2)}</div><div class="sl">Total comprado</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gn)">$${rs.total_pagado.toFixed(2)}</div><div class="sl">Total pagado</div></div>
+    <div class="stat"><div class="sv" style="color:${rs.total_saldo>0?'var(--rd)':'var(--gn)'}">$${rs.total_saldo.toFixed(2)}</div><div class="sl">Saldo pendiente</div></div>
+  `;
+  const body=document.getElementById('histBody');
+  if(!d.historial.length){body.innerHTML='<div class="empty"><div class="ei">📋</div><p>Sin registros</p></div>';return;}
+  body.innerHTML=d.historial.map(v=>{
+    const eb=v.estado==='pagada'?'bg2':v.estado==='credito'?'ba':'br2';
+    return `<div class="hist-venta">
+      <div class="hist-header" onclick="toggleHist(this)">
+        <div><strong>${v.numero}</strong> · ${v.fecha}<br><span style="font-size:11px;color:var(--mt)">${v.tipo_pago} · <span class="badge ${eb}" style="font-size:10px">${v.estado}</span></span></div>
+        <div style="text-align:right"><strong style="color:var(--ac)">$${v.total.toFixed(2)}</strong>${v.saldo>0?`<br><span style="font-size:11px;color:var(--rd)">Debe $${v.saldo.toFixed(2)}</span>`:''}</div>
+      </div>
+      <div class="hist-body">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">Productos:</div>
+        ${v.detalles.map(d=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:12px">${d.imagen?`<img src="${d.imagen}" class="prod-img-mini">`:`<div style="width:40px;height:40px;background:var(--bg);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">${getCatEmoji(d.categoria)}</div>`}<div style="flex:1"><strong>${d.producto}</strong><br><span style="color:var(--mt)">${d.categoria}</span></div><div style="text-align:right"><strong>$${d.subtotal.toFixed(2)}</strong><br><span style="color:var(--mt)">${d.cantidad} × $${d.precio_unitario.toFixed(2)}</span></div></div>`).join('')}
+        ${v.pagos.length?`<div style="font-size:12px;font-weight:600;margin:8px 0 5px">Pagos:</div>${v.pagos.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--bd)"><span>${p.metodo.toUpperCase()} — ${p.fecha}${p.referencia?' ('+p.referencia+')':''}</span><span style="color:var(--gn);font-weight:700">+$${p.monto.toFixed(2)}</span></div>`).join('')}`:''}
+        ${v.notas?`<div style="margin-top:6px;font-size:11px;color:var(--mt);background:var(--bg);padding:7px;border-radius:var(--rs)">📝 ${v.notas}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleHist(header){const body=header.nextElementSibling;body.classList.toggle('open');}
+
+// ─── INVENTARIO ───────────────────────────────────────────────
+async function cargarInv(){
+  const q=(document.getElementById('invS')||{value:''}).value;
+  const cat=(document.getElementById('invCat')||{value:''}).value;
+  const r=await fetch(`/api/productos/?q=${encodeURIComponent(q)}&categoria=${cat}`);
+  const d=await r.json();const tb=document.getElementById('tbInv');if(!tb)return;
+  if(!d.productos.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="ei">📦</div><p>Sin productos</p></div></td></tr>`;return;}
+  const sb=s=>s<=5?'br2':s<=20?'ba':'bg2';
+  tb.innerHTML=d.productos.map(p=>`<tr><td><span style="font-family:monospace;font-size:12px;font-weight:700;color:var(--ac)">${p.indice||'—'}</span></td><td>${p.imagen?`<img src="${p.imagen}" style="width:38px;height:38px;object-fit:cover;border-radius:6px">`:`<div style="width:38px;height:38px;background:var(--bg);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">${getCatEmoji(p.categoria)}</div>`}</td><td><strong>${p.nombre}</strong><br><span style="font-size:11px;color:var(--mt)">${p.codigo_barras}</span></td><td><span class="badge bb">${p.categoria}</span></td><td style="font-weight:600">$${p.precio.toFixed(2)}</td><td><span class="badge ${sb(p.stock)}">${p.stock} ${p.unidad_display}</span></td><td style="font-weight:600">$${p.valor_total.toFixed(2)}</td></tr>`).join('');
+}
+
+// ─── REPORTES ────────────────────────────────────────────────
+function swRep(t){
+  ['repVentas','repInventario','repCreditos'].forEach(x=>{const el=document.getElementById(x);if(el)el.style.display='none';});
+  const m={'ventas':'repVentas','inventario':'repInventario','creditos':'repCreditos'};
+  const el=document.getElementById(m[t]);if(el)el.style.display='block';
+  document.querySelectorAll('#page-reportes .tabs .tab').forEach((b,i)=>b.classList.toggle('active',['ventas','inventario','creditos'][i]===t));
+  if(t==='ventas')cargarRepV();
+  if(t==='inventario')cargarRepInv();
+  if(t==='creditos')cargarRepCred();
+}
+async function cargarRepV(){
+  const des=(document.getElementById('rDesde')||{value:''}).value;
+  const has=(document.getElementById('rHasta')||{value:''}).value;
+  const est=(document.getElementById('rEstado')||{value:''}).value;
+  const r=await fetch(`/api/reportes/ventas/?desde=${des}&hasta=${has}&estado=${est}`);
+  const d=await r.json();
+  const rs=d.filtradas;
+  document.getElementById('repStats').innerHTML=`
+    <div class="stat"><div class="sv">${rs.ventas}</div><div class="sl">Ventas filtradas</div></div>
+    <div class="stat"><div class="sv" style="color:var(--ac)">$${rs.total.toFixed(2)}</div><div class="sl">Total ingresos</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gn)">${rs.pagadas}</div><div class="sl">Pagadas</div></div>
+    <div class="stat"><div class="sv" style="color:var(--am)">${rs.credito}</div><div class="sl">Crédito</div></div>
+  `;
+  const tb=document.getElementById('tbRV');if(!tb)return;
+  const eb=s=>s==='pagada'?'bg2':s==='credito'?'ba':'br2';
+  tb.innerHTML=d.lista.map(v=>`<tr onclick="verVenta(${v.id})"><td style="font-size:11px">${v.numero}</td><td><strong>${v.cliente}</strong><br><span style="font-size:11px;color:var(--mt)">${v.cedula}</span></td><td style="font-weight:700">$${v.total.toFixed(2)}</td><td><span class="badge ${eb(v.estado)}">${v.estado}</span></td><td style="font-size:11px;color:var(--mt)">${v.fecha}</td><td>${v.whatsapp?`<button onclick="event.stopPropagation();abrirWA('${v.whatsapp.replace(/'/g,"\\'")}','${v.numero}',${v.total})" style="border:none;background:#25D366;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:700">📲</button>`:'—'}</td></tr>`).join('')||`<tr><td colspan="6"><div class="empty"><div class="ei">🧾</div><p>Sin ventas</p></div></td></tr>`;
+}
+async function cargarRepInv(){
+  const r=await fetch('/api/reportes/');const d=await r.json();
+  const el=document.getElementById('repInvContent');if(!el)return;
+  const totalVal=d.resumen.valor_total;
+  el.innerHTML=`
+    <div class="sgrid" style="margin-bottom:14px">
+      <div class="stat"><div class="sv">${d.resumen.total_productos}</div><div class="sl">Productos</div></div>
+      <div class="stat"><div class="sv" style="color:var(--ac)">$${totalVal.toFixed(2)}</div><div class="sl">Valor total</div></div>
+    </div>
+    ${d.por_categoria.map(cat=>`
+      <div class="cat-report">
+        <div class="cat-report-header">
+          <span class="cat-emo">${cat.emoji}</span>
+          <div>
+            <div class="cat-report-title">${cat.nombre}</div>
+            <div style="font-size:12px;color:var(--mt)">${cat.cantidad} productos · $${cat.valor.toFixed(2)} · Stock: ${cat.stock_total}</div>
+          </div>
+          <div style="margin-left:auto;font-size:14px;font-weight:700;color:var(--ac)">$${cat.valor.toFixed(2)}</div>
+        </div>
+        <div class="cat-bar"><div class="cat-bar-fill" style="width:${totalVal>0?Math.round(cat.valor/totalVal*100):0}%"></div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px">
+          ${cat.productos.map(p=>`<div style="background:var(--bg);padding:8px;border-radius:var(--rs);text-align:center;font-size:11px">${p.imagen?`<img src="${p.imagen}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;margin-bottom:4px;display:block;margin:0 auto 4px">`:`<div style="font-size:24px;margin-bottom:3px">${cat.emoji}</div>`}<div style="font-size:10px;color:var(--ac);font-weight:700;margin-bottom:1px">#${p.indice||'—'}</div><div style="font-weight:600;margin-bottom:2px">${p.nombre.length>16?p.nombre.substring(0,15)+'…':p.nombre}</div><div style="color:var(--ac);font-weight:700">$${p.precio.toFixed(2)}</div><div style="color:var(--mt)">Stock: ${p.stock}</div></div>`).join('')}
+        </div>
+      </div>`).join('')}
+    ${d.stock_bajo.length?`<div class="card"><div class="ct" style="color:var(--rd)">⚠️ Stock bajo</div>${d.stock_bajo.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px"><span><strong>${p.nombre}</strong> <span style="font-size:11px;color:var(--mt)">[${p.categoria}]</span></span><span class="badge br2">${p.stock} ${p.unidad}</span></div>`).join('')}</div>`:''}
+  `;
+}
+async function cargarRepCred(){
+  const r=await fetch('/api/reportes/ventas/');const d=await r.json();
+  const el=document.getElementById('repCreditosContent');if(!el)return;
+  el.innerHTML=`
+    <div class="sgrid" style="margin-bottom:14px">
+      <div class="stat"><div class="sv" style="color:var(--rd)">${d.creditos.cantidad}</div><div class="sl">Clientes con saldo</div></div>
+      <div class="stat"><div class="sv" style="color:var(--rd)">$${d.creditos.saldo_total.toFixed(2)}</div><div class="sl">Total por cobrar</div></div>
+    </div>
+    ${d.creditos_lista.length?d.creditos_lista.map(v=>`
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--rd)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:15px;font-weight:700">${v.cliente}</div>
+            <div style="font-size:12px;color:var(--mt);margin-top:2px">Cédula: ${v.cedula} · 📞 ${v.telefono||'—'}</div>
+            <div style="font-size:12px;color:var(--mt)">Factura: ${v.numero} · Vence: ${v.vencimiento}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:700;color:var(--rd)">$${v.saldo.toFixed(2)}</div>
+            <div style="font-size:11px;color:var(--mt)">de $${v.total.toFixed(2)}</div>
+          </div>
+        </div>
+        <div class="br" style="margin-top:8px">
+          ${v.whatsapp?`<button class="btn bwa bsm" onclick="abrirWA('${v.whatsapp.replace(/'/g,"\\'")}','${v.numero}',${v.saldo})">📲 Recordar pago</button>`:''}
+          <button class="btn bp bsm" onclick="verVenta(${v.id})">Ver factura</button>
+        </div>
+      </div>`).join(''):'<div class="empty"><div class="ei">✅</div><p>Sin créditos pendientes</p></div>'}
+  `;
+}
+
+// ─── PAGOS ────────────────────────────────────────────────────
+function showMPago(){document.getElementById('pagoM').value='';document.getElementById('pagoRef').value='';document.getElementById('ovPago').classList.add('open');}
+async function confirmarPago(){
+  const monto=parseFloat(document.getElementById('pagoM').value);
+  if(!monto||monto<=0){toast('Ingresa un monto válido');return;}
+  const r=await fetch(`/api/ventas/${ventaId}/pago/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto,metodo:document.getElementById('pagoMet').value,referencia:document.getElementById('pagoRef').value})});
+  const d=await r.json();
+  if(d.ok){hablar('Pago registrado correctamente. Saldo actualizado.');toast('✓ Pago registrado');cerrarOv('ovPago');verVenta(ventaId);cargarVentas();}
+  else{hablar('Error al registrar el pago. '+(d.error||''));toast(d.error||'Error');}
+}
+
+// ─── CONFIG ───────────────────────────────────────────────────
+async function cargarCfg(){
+  try{
+    const r=await fetch('/api/config/');const d=await r.json();
+    negocio={nombre:d.nombre,ruc:d.ruc,telefono:d.telefono,direccion:d.direccion,pie_pagina:d.pie_pagina,logo_texto:d.logo_texto,whatsapp_admin:d.whatsapp_admin,email_admin:d.email_admin};
+    document.getElementById('cfgL').value=d.logo_texto;document.getElementById('cfgN').value=d.nombre;
+    document.getElementById('cfgR').value=d.ruc;document.getElementById('cfgT').value=d.telefono;
+    document.getElementById('cfgD').value=d.direccion;document.getElementById('cfgP').value=d.pie_pagina;
+    document.getElementById('cfgWA').value=d.whatsapp_admin;document.getElementById('cfgEM').value=d.email_admin;
+    document.getElementById('sideNom').textContent=d.logo_texto+' '+d.nombre;
+    prevCfg();
+  }catch(e){}
+}
+function prevCfg(){
+  const nom=document.getElementById('cfgN')?.value||'Mi Negocio';
+  document.getElementById('pvL').textContent=document.getElementById('cfgL')?.value||'🏪';
+  document.getElementById('pvN').textContent=nom;
+  document.getElementById('pvR').textContent='RUC: '+(document.getElementById('cfgR')?.value||'—');
+  document.getElementById('pvTD').textContent=[document.getElementById('cfgT')?.value,document.getElementById('cfgD')?.value].filter(Boolean).join(' · ')||'—';
+  document.getElementById('sideNom').textContent=(document.getElementById('cfgL')?.value||'📦')+' '+nom;
+}
+async function guardarCfg(){
+  const body={logo_texto:document.getElementById('cfgL').value,nombre:document.getElementById('cfgN').value,ruc:document.getElementById('cfgR').value,telefono:document.getElementById('cfgT').value,direccion:document.getElementById('cfgD').value,pie_pagina:document.getElementById('cfgP').value,whatsapp_admin:document.getElementById('cfgWA').value,email_admin:document.getElementById('cfgEM').value};
+  const r=await fetch('/api/config/guardar/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.ok){
+    negocio={...negocio,...body};
+    toast('✓ Configuración guardada');
+    localStorage.setItem('negocioNombre', body.nombre||'InventarioNube');
+    localStorage.setItem('negocioLogo', body.logo_texto||'📦');
+    document.getElementById('sideNom').textContent=(body.logo_texto||'📦')+' '+body.nombre;
+  }
+}
+
+
+// ─── VOZ / RECONOCIMIENTO DE AUDIO + SÍNTESIS ────────────────
+let recVenta=null, recReg=null, vozActiva=false;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const synth = window.speechSynthesis;
+
+// Hablar en voz alta
+function hablar(texto, onEnd=null){
+  if(!synth) return;
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'es-EC';
+  u.rate = 1.05;
+  u.pitch = 1.1;
+  u.volume = 1;
+  if(onEnd) u.onend = onEnd;
+  // Try to find Spanish voice
+  const voces = synth.getVoices();
+  const voz = voces.find(v=>v.lang.startsWith('es'))||voces[0];
+  if(voz) u.voice = voz;
+  synth.speak(u);
+}
+
+function toggleVoz(){
+  const panel=document.getElementById('vozPanel');
+  if(vozActiva){cerrarVoz();return;}
+  if(!SR){
+    toast('Tu navegador no soporta voz. Usa Chrome.');
+    hablar('Reconocimiento de voz no disponible. Por favor usa Google Chrome.');
+    return;
+  }
+  panel.style.display='block';
+  vozActiva=true;
+  document.getElementById('btnVoz').style.background='#dc2626';
+  document.getElementById('btnVoz').textContent='🔴';
+  panel.scrollIntoView({behavior:'smooth'});
+  hablar('Asistente de voz activado. Toca Hablar y di el nombre del producto.');
+}
+
+function cerrarVoz(){
+  document.getElementById('vozPanel').style.display='none';
+  vozActiva=false;
+  document.getElementById('btnVoz').style.background='#7c3aed';
+  document.getElementById('btnVoz').textContent='🎤';
+  if(recVenta){try{recVenta.stop();}catch(e){}}
+  synth&&synth.cancel();
+}
+
+function activarMicrofono(){
+  if(!SR){hablar('Reconocimiento de voz no disponible.');return;}
+  const estado=document.getElementById('vozEstado');
+  const texto=document.getElementById('vozTexto');
+  estado.textContent='🔴 Escuchando...';
+  estado.style.color='#f87171';
+  texto.textContent='';
+  synth&&synth.cancel();
+
+  recVenta=new SR();
+  recVenta.lang='es-EC';
+  recVenta.continuous=false;
+  recVenta.interimResults=true;
+  recVenta.maxAlternatives=5;
+
+  recVenta.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    texto.textContent=interim||final;
+    if(final) procesarVoz(final.trim());
+  };
+
+  recVenta.onerror=e=>{
+    estado.textContent='❌ Error: '+e.error;
+    estado.style.color='#f87171';
+    const msg=e.error==='not-allowed'?'Permiso de micrófono denegado.':'Error de micrófono: '+e.error;
+    hablar(msg);
+    toast(msg);
+  };
+
+  recVenta.onend=()=>{
+    if(estado.textContent==='🔴 Escuchando...'){
+      estado.textContent='Di el nombre del producto...';
+      estado.style.color='#fff';
+    }
+  };
+
+  recVenta.start();
+}
+
+async function procesarVoz(textoEscuchado){
+  const estado=document.getElementById('vozEstado');
+  estado.textContent='🔍 Buscando: "'+textoEscuchado+'"';
+  estado.style.color='#86efac';
+  hablar('Buscando '+textoEscuchado);
+
+  const r=await fetch('/api/buscar-voz/?q='+encodeURIComponent(textoEscuchado));
+  const d=await r.json();
+
+  document.getElementById('vozTextoEscuchado').textContent='"'+textoEscuchado+'"';
+
+  if(!d.productos.length){
+    // NO EXISTE — voz alta + abrir pestaña audio
+    hablar('No existe el producto '+textoEscuchado+'. Voy a abrir el registro por audio para crearlo.', ()=>{
+      setTimeout(()=>hablar('Dime el nombre del producto y su precio.'),300);
+    });
+    toast('❌ Producto no encontrado — abriendo registro por audio');
+    abrirRegistroVoz(textoEscuchado);
+    return;
+  }
+
+  if(d.productos.length===1&&d.productos[0].score>=88){
+    const p=d.productos[0];
+    hablar('Encontré '+p.nombre+' a '+p.precio.toFixed(2)+' dólares. ¿Lo agrego al carrito?');
+    mostrarConfirmacionVoz(p,textoEscuchado);
+    return;
+  }
+
+  hablar('Encontré '+d.productos.length+' productos similares. Por favor elige uno.');
+  mostrarSeleccionVoz(d.productos,textoEscuchado);
+}
+
+function mostrarConfirmacionVoz(p,textoVoz){
+  window._vozStock=p.stock;
+  window._vozCantidad=1;
+  document.getElementById('vozResultados').innerHTML=`
+    <div style="background:#1a2744;border:2px solid #22c55e;border-radius:var(--rs);padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#fff">${p.nombre}</div>
+          <div style="font-size:12px;color:#86efac;margin-top:3px">${p.categoria} · Stock: ${p.stock} ${p.unidad||''}</div>
+          <div style="font-size:11px;color:#a5b4fc">Índice: #${p.indice||'—'}</div>
+        </div>
+        <div style="font-size:22px;font-weight:700;color:#22c55e">$${p.precio.toFixed(2)}</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="qrow">
+          <button class="qbtn" style="background:#312e81;border-color:#6366f1;color:#fff" onclick="chVozCant(-1)">−</button>
+          <span id="vozProdCant" style="font-size:18px;font-weight:700;color:#fff;min-width:26px;text-align:center">1</span>
+          <button class="qbtn" style="background:#312e81;border-color:#6366f1;color:#fff" onclick="chVozCant(1)">+</button>
+        </div>
+        <div style="display:flex;gap:7px">
+          <button class="btn bgn bsm" onclick="confirmarProductoVoz(${p.id},'${p.nombre.replace(/'/g,"\'")}',${p.precio},${p.stock})">✓ Sí, agregar</button>
+          <button class="btn bsm" style="background:var(--rd);color:#fff;border-color:var(--rd)" onclick="abrirRegistroVoz('${textoVoz}')">✗ No es este</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn bsm" onclick="activarMicrofono()" style="background:#6366f1;color:#fff;border-color:#6366f1;width:100%;justify-content:center">🎙️ Repetir búsqueda por voz</button>
+    </div>
+  `;
+  cerrarVoz();
+  document.getElementById('ovVozConfirm').classList.add('open');
+}
+
+function mostrarSeleccionVoz(productos,textoVoz){
+  document.getElementById('vozResultados').innerHTML=`
+    <div style="font-size:12px;color:#a5b4fc;margin-bottom:8px">Toca el producto correcto:</div>
+    ${productos.map((p,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:#1a2744;border:1px solid #312e81;border-radius:var(--rs);margin-bottom:7px;cursor:pointer" onclick="confirmarProductoVozDirecto(${p.id},'${p.nombre.replace(/'/g,"\'")}',${p.precio},${p.stock})">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#fff">#${p.indice||'—'} ${p.nombre}</div>
+        <div style="font-size:11px;color:#a5b4fc">${p.categoria} · Stock: ${p.stock}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:700;color:#22c55e">$${p.precio.toFixed(2)}</div>
+        <div style="font-size:10px;color:#6366f1">${p.score}% similar</div>
+      </div>
+    </div>`).join('')}
+    <button class="btn bsm" style="width:100%;background:var(--am);color:#fff;border-color:var(--am);justify-content:center;margin-top:4px" onclick="abrirRegistroVoz('${textoVoz}')">➕ No está — registrar por audio</button>
+    <button class="btn bsm" style="width:100%;background:#6366f1;color:#fff;border-color:#6366f1;justify-content:center;margin-top:6px" onclick="activarMicrofono()">🎙️ Repetir</button>
+  `;
+  cerrarVoz();
+  document.getElementById('ovVozConfirm').classList.add('open');
+}
+
+function chVozCant(d){
+  window._vozCantidad=Math.max(1,Math.min(window._vozStock||99,(window._vozCantidad||1)+d));
+  const el=document.getElementById('vozProdCant');
+  if(el) el.textContent=window._vozCantidad;
+}
+
+function confirmarProductoVoz(id,nombre,precio,stock){
+  const cant=window._vozCantidad||1;
+  addCarrito(id,nombre,precio,stock,cant);
+  cerrarOv('ovVozConfirm');
+  hablar('Agregado: '+cant+' '+nombre+' al carrito. Total del carrito actualizado.');
+  toast('✓ '+nombre+' x'+cant+' agregado');
+}
+
+function confirmarProductoVozDirecto(id,nombre,precio,stock){
+  addCarrito(id,nombre,precio,stock,1);
+  cerrarOv('ovVozConfirm');
+  hablar('Perfecto. '+nombre+' agregado al carrito.');
+  toast('✓ '+nombre+' agregado');
+}
+
+// ─── PESTAÑA AUDIO — REGISTRO POR VOZ ──────────────────────────
+function abrirRegistroVoz(textoInicial=''){
+  cerrarOv('ovVozConfirm');
+  document.getElementById('vozRegNom').value=textoInicial;
+  document.getElementById('vozRegPre').value='';
+  document.getElementById('vozRegTexto').textContent='Toca el micrófono...';
+  document.getElementById('vozRegTexto').style.color='#fcd34d';
+  // Populate categories
+  const sel=document.getElementById('vozRegCat');
+  sel.innerHTML=categorias.map(c=>`<option value="${c.nombre}">${c.emoji} ${c.nombre}</option>`).join('');
+  document.getElementById('ovVozRegistro').classList.add('open');
+  // Instrucción por voz
+  setTimeout(()=>{
+    hablar('Producto no encontrado. Dime el nombre y el precio. Por ejemplo: Coca Cola, un dólar cincuenta.');
+  },400);
+}
+
+function activarMicVozReg(){
+  if(!SR){hablar('Micrófono no disponible.');return;}
+  const textoEl=document.getElementById('vozRegTexto');
+  textoEl.textContent='🔴 Escuchando...';
+  textoEl.style.color='#f87171';
+  synth&&synth.cancel();
+  hablar('Adelante, te escucho.');
+
+  recReg=new SR();
+  recReg.lang='es-EC';
+  recReg.continuous=false;
+  recReg.interimResults=false;
+  recReg.maxAlternatives=3;
+
+  recReg.onresult=e=>{
+    const transcripcion=e.results[0][0].transcript.trim();
+    textoEl.textContent='"'+transcripcion+'"';
+    textoEl.style.color='#fcd34d';
+    parsearNombrePrecio(transcripcion);
+  };
+
+  recReg.onerror=e=>{
+    textoEl.textContent='Error: '+e.error;
+    textoEl.style.color='#f87171';
+    hablar('No pude escuchar. Intenta de nuevo.');
+  };
+
+  recReg.onend=()=>{if(textoEl.textContent==='🔴 Escuchando...') textoEl.textContent='Toca el micrófono...';}
+  recReg.start();
+}
+
+function parsearNombrePrecio(transcripcion){
+  // Convert spoken numbers to digits: "cinco" -> 5, "dos cincuenta" -> 2.50
+  const mapaNumeros={'cero':0,'uno':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,'trece':13,'catorce':14,'quince':15,'veinte':20,'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,'setenta':70,'ochenta':80,'noventa':90,'cien':100,'doscientos':200,'trescientos':300,'cuatrocientos':400,'quinientos':500};
+  const palabras=transcripcion.toLowerCase().split(/\s+/);
+  let precio=0, nombrePartes=[], enPrecio=false;
+
+  // Try to find price words at the end
+  const ultimasPalabras=palabras.slice(-4);
+  let precioTexto='';
+  for(let i=palabras.length-1;i>=0;i--){
+    const p=palabras[i];
+    const n=parseFloat(p.replace(',','.'));
+    if(!isNaN(n)&&n>0){precio=n;nombrePartes=palabras.slice(0,i);break;}
+    if(mapaNumeros[p]!==undefined){
+      // accumulate spoken number
+      let acum=0,j=i;
+      while(j>=0&&(mapaNumeros[palabras[j]]!==undefined||palabras[j]==='y'||palabras[j]==='con')){
+        if(mapaNumeros[palabras[j]]!==undefined) acum+=mapaNumeros[palabras[j]];
+        j--;
+      }
+      if(acum>0){precio=acum/100;nombrePartes=palabras.slice(0,j+1);break;}
+    }
+  }
+
+  // If no price found, use all as name
+  if(precio===0&&nombrePartes.length===0) nombrePartes=palabras;
+
+  const nombre=nombrePartes.join(' ').replace(/\b(dólares?|pesos?|centavos?|precio|cuesta|vale|a|por)\b/gi,'').trim();
+  const nombreFinal=nombre||transcripcion;
+  
+  document.getElementById('vozRegNom').value=capitalize(nombreFinal);
+  if(precio>0) document.getElementById('vozRegPre').value=precio.toFixed(2);
+
+  if(precio>0){
+    hablar('Escuché: '+nombreFinal+' a '+precio.toFixed(2)+' dólares. Puedes corregir si algo está mal y luego guardar.');
+  } else {
+    hablar('Escuché el nombre: '+nombreFinal+'. Falta el precio. Puedes escribirlo o volver a hablar.');
+  }
+}
+
+function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+function confirmarVozDatosOK(){
+  const nom=document.getElementById('vozRegNom').value.trim();
+  const pre=parseFloat(document.getElementById('vozRegPre').value)||0;
+  if(!nom){hablar('Falta el nombre del producto.');toast('⚠️ El nombre es obligatorio');return;}
+  if(pre<=0){hablar('Falta el precio. Por favor escríbelo.');toast('⚠️ El precio es obligatorio');return;}
+  hablar('Perfecto. Registrando '+nom+' a '+pre.toFixed(2)+' dólares.');
+  guardarRegistroVoz();
+}
+
+async function guardarRegistroVoz(){
+  const nombre=document.getElementById('vozRegNom').value.trim();
+  const precio=parseFloat(document.getElementById('vozRegPre').value)||0;
+  const cat=document.getElementById('vozRegCat').value||'Otro';
+  if(!nombre){hablar('El nombre del producto es obligatorio.');toast('⚠️ El nombre es obligatorio');return;}
+  const codigo='VOZ-'+Date.now();
+  const body={codigo_barras:codigo,nombre,categoria:cat,precio,stock:99,unidad:'unidad',notas:'Creado por audio'};
+  const r=await fetch('/api/productos/crear/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.ok){
+    cerrarOv('ovVozRegistro');
+    addCarrito(d.id,nombre,precio,99,1);
+    allProds=[];
+    hablar('Listo. '+nombre+' fue registrado y agregado al carrito.');
+    toast('✓ Producto registrado y agregado');
+  } else {
+    hablar('Hubo un error al guardar. Intenta de nuevo.');
+    toast(d.error||'Error al registrar');
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────
+function cerrarOv(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ─── TEMAS Y COLORES ──────────────────────────────────────────
+const TEMAS = {
+  azul:     {ac:'#0047cc', acl:'#dce8ff', sidebar:'#0d0d1f'},
+  verde:    {ac:'#076b36', acl:'#cbf0db', sidebar:'#021a0d'},
+  morado:   {ac:'#5b21b6', acl:'#ede9fe', sidebar:'#1e0a40'},
+  rojo:     {ac:'#b91c1c', acl:'#fee2e2', sidebar:'#1f0505'},
+  naranja:  {ac:'#c2410c', acl:'#ffedd5', sidebar:'#1f0a02'},
+  negro:    {ac:'#374151', acl:'#f3f4f6', sidebar:'#111827'},
+  claro:    {ac:'#0369a1', acl:'#e0f2fe', sidebar:'#1e3a5f'},
+  cafe:     {ac:'#92400e', acl:'#fef3c7', sidebar:'#1c0a02'},
+};
+
+function aplicarTema(nombre){
+  const t = TEMAS[nombre];
+  if(!t) return;
+  const r = document.documentElement.style;
+  r.setProperty('--ac', t.ac);
+  r.setProperty('--acl', t.acl);
+  // Update sidebar color
+  const sb = document.querySelector('.sidebar');
+  if(sb) sb.style.background = t.sidebar;
+  const mb = document.querySelector('.mobile-bar');
+  if(mb) mb.style.background = t.sidebar;
+  // Save preference
+  localStorage.setItem('tema', nombre);
+  localStorage.setItem('temaData', JSON.stringify(t));
+  // Mark selected button
+  document.querySelectorAll('.tema-btn').forEach(b=>{
+    b.style.outline = b.dataset.tema === nombre ? '4px solid #fff' : 'none';
+    b.style.outlineOffset = '2px';
+  });
+  hablar && hablar('Tema '+nombre+' aplicado.');
+  toast('✓ Tema '+nombre+' aplicado');
+}
+
+function aplicarTamano(tam){
+  const sizes = {normal:'19px', grande:'22px', muygrande:'26px'};
+  document.documentElement.style.setProperty('--fs', sizes[tam]||'19px');
+  localStorage.setItem('tamano', tam);
+  toast('✓ Tamaño de texto actualizado');
+}
+
+function cargarTemaGuardado(){
+  const tema = localStorage.getItem('tema');
+  const tamano = localStorage.getItem('tamano');
+  if(tema) aplicarTema(tema);
+  if(tamano) aplicarTamano(tamano);
+}
+
+// ─── SPLASH SCREEN ────────────────────────────────────────────
+function mostrarSplash(){
+  const bar = document.getElementById('splashBar');
+  const splash = document.getElementById('splash');
+  const splashNom = document.getElementById('splashNom');
+  const splashLogo = document.getElementById('splashLogo');
+  if(!splash) return;
+
+  // Update splash with negocio name if available
+  const nomGuardado = localStorage.getItem('negocioNombre');
+  if(nomGuardado && splashNom) splashNom.textContent = nomGuardado;
+  const logoGuardado = localStorage.getItem('negocioLogo');
+  if(logoGuardado && splashLogo) splashLogo.textContent = logoGuardado;
+
+  // Progress bar animation
+  let progress = 0;
+  const interval = setInterval(()=>{
+    progress += Math.random() * 18;
+    if(progress >= 100){
+      progress = 100;
+      clearInterval(interval);
+      // Fade out splash
+      setTimeout(()=>{
+        splash.style.opacity = '0';
+        setTimeout(()=>{ splash.style.display='none'; }, 500);
+      }, 300);
+    }
+    if(bar) bar.style.width = progress + '%';
+  }, 80);
+}
+
+// ─── PWA ──────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(r=>console.log('SW registrado'))
+      .catch(e=>console.log('SW error:',e));
+  });
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  const btn=document.getElementById('btnInstalarApp');
+  if(btn) btn.style.display='flex';
+});
+function instalarApp(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;});}
+}
+// Load voices for speech synthesis
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

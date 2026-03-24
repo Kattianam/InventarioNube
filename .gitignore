@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Entorno virtual
+venv/
+env/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+
+# Variables de entorno — NUNCA subir esto
+.env
+.env.local
+.env.production
+
+# Imágenes subidas por usuarios
+media/productos/*.jpg
+media/productos/*.png
+media/productos/*.jpeg
+media/productos/*.webp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
