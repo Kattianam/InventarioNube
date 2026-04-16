@@ -10,7 +10,6 @@
 [![PWA](https://img.shields.io/badge/PWA-Instalable-purple?style=for-the-badge)](https://web.dev/pwa)
 [![License](https://img.shields.io/badge/Licencia-MIT-orange?style=for-the-badge)](LICENSE)
 
-**Desarrollado con la asistencia de [Claude](https://claude.ai) (Anthropic)**
 
 [✨ Ver demo](#demo) · [🚀 Instalación](#instalación) · [📲 Solicitar instalación](#-solicitar-instalación-personalizada) · [💬 Contacto](#-contacto)
 
